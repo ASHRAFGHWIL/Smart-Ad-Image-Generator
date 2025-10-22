@@ -11,11 +11,18 @@ interface AdTextStepProps {
 }
 
 const fontStyles = [
-  { key: 'Modern', label: 'حديث' },
-  { key: 'Elegant', label: 'أنيق' },
-  { key: 'Bold', label: 'عريض' },
-  { key: 'Playful', label: 'مرح' },
+  { key: 'Modern', label: 'حديث', className: 'font-montserrat' },
+  { key: 'Elegant', label: 'أنيق', className: 'font-playfair' },
+  { key: 'Bold', label: 'عريض', className: 'font-oswald' },
+  { key: 'Playful', label: 'مرح', className: 'font-pacifico' },
 ];
+
+const countWords = (str: string) => {
+  if (!str.trim()) {
+      return 0;
+  }
+  return str.trim().split(/\s+/).length;
+};
 
 const AdTextStep: React.FC<AdTextStepProps> = ({ productAnalysis, sceneDescription, onBack, onAdTextSubmit }) => {
   const [headline, setHeadline] = useState('');
@@ -44,13 +51,6 @@ const AdTextStep: React.FC<AdTextStepProps> = ({ productAnalysis, sceneDescripti
     if (headline && body) {
       onAdTextSubmit({ headline, body, fontStyle });
     }
-  };
-  
-  const countWords = (str: string) => {
-    if (!str.trim()) {
-        return 0;
-    }
-    return str.trim().split(/\s+/).length;
   };
 
   return (
@@ -113,9 +113,9 @@ const AdTextStep: React.FC<AdTextStepProps> = ({ productAnalysis, sceneDescripti
                 key={style.key}
                 type="button"
                 onClick={() => setFontStyle(style.key)}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 border-2 ${
+                className={`px-4 py-2 rounded-lg transition-all duration-200 border-2 w-32 h-16 flex items-center justify-center text-xl ${style.className} ${
                   fontStyle === style.key 
-                    ? 'bg-gradient-to-r from-[#007BFF] to-[#8A2BE2] text-white border-transparent shadow-md' 
+                    ? 'bg-gradient-to-r from-[#007BFF] to-[#8A2BE2] text-white border-transparent shadow-md scale-105' 
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-600 hover:border-[#007BFF] hover:text-[#007BFF] dark:hover:border-[#007BFF] dark:hover:text-[#007BFF]'
                 }`}
               >
