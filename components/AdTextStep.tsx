@@ -1,19 +1,28 @@
 import React, { useState } from 'react';
 import { generateAdText } from '../services/geminiService';
 import Spinner from './Spinner';
+import type { AdText } from '../types';
 
 interface AdTextStepProps {
   productAnalysis: string;
   sceneDescription: string;
   onBack: () => void;
-  onAdTextSubmit: (text: { headline: string; body: string }) => void;
+  onAdTextSubmit: (text: AdText) => void;
 }
+
+const fontStyles = [
+  { key: 'Modern', label: 'حديث' },
+  { key: 'Elegant', label: 'أنيق' },
+  { key: 'Bold', label: 'عريض' },
+  { key: 'Playful', label: 'مرح' },
+];
 
 const AdTextStep: React.FC<AdTextStepProps> = ({ productAnalysis, sceneDescription, onBack, onAdTextSubmit }) => {
   const [headline, setHeadline] = useState('');
   const [body, setBody] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fontStyle, setFontStyle] = useState('Modern');
 
   const handleGenerateText = async () => {
     setIsLoading(true);
@@ -33,8 +42,15 @@ const AdTextStep: React.FC<AdTextStepProps> = ({ productAnalysis, sceneDescripti
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (headline && body) {
-      onAdTextSubmit({ headline, body });
+      onAdTextSubmit({ headline, body, fontStyle });
     }
+  };
+  
+  const countWords = (str: string) => {
+    if (!str.trim()) {
+        return 0;
+    }
+    return str.trim().split(/\s+/).length;
   };
 
   return (
@@ -66,6 +82,10 @@ const AdTextStep: React.FC<AdTextStepProps> = ({ productAnalysis, sceneDescripti
             required
             maxLength={50}
           />
+          <div className="flex justify-end text-xs text-gray-500 dark:text-gray-400 gap-x-4 mt-1 px-1">
+            <span>{countWords(headline)} كلمة</span>
+            <span>{headline.length}/50 حرف</span>
+          </div>
         </div>
         <div>
           <label htmlFor="body" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">النص الأساسي</label>
@@ -79,6 +99,30 @@ const AdTextStep: React.FC<AdTextStepProps> = ({ productAnalysis, sceneDescripti
             required
             maxLength={150}
           />
+          <div className="flex justify-end text-xs text-gray-500 dark:text-gray-400 gap-x-4 mt-1 px-1">
+            <span>{countWords(body)} كلمة</span>
+            <span>{body.length}/150 حرف</span>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">نمط الخط</label>
+          <div className="flex flex-wrap gap-3">
+            {fontStyles.map(style => (
+              <button
+                key={style.key}
+                type="button"
+                onClick={() => setFontStyle(style.key)}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 border-2 ${
+                  fontStyle === style.key 
+                    ? 'bg-gradient-to-r from-[#007BFF] to-[#8A2BE2] text-white border-transparent shadow-md' 
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-600 hover:border-[#007BFF] hover:text-[#007BFF] dark:hover:border-[#007BFF] dark:hover:text-[#007BFF]'
+                }`}
+              >
+                {style.label}
+              </button>
+            ))}
+          </div>
         </div>
         
         {error && (

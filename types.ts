@@ -19,3 +19,9 @@ export interface UploadedImage {
   data: string; // base64 encoded
   mimeType: string;
 }
+
+export interface AdText {
+  headline: string;
+  body: string;
+  fontStyle: string;
+}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-import type { AnalysisResult, Scene, AdSize, UploadedImage } from './types';
+import type { AnalysisResult, Scene, AdSize, UploadedImage, AdText } from './types';
 
 // Components for each step
 import ImageUploadStep from './components/ImageUploadStep';
@@ -21,7 +21,7 @@ const App: React.FC = () => {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [selectedScene, setSelectedScene] = useState<Scene | null>(null);
   const [selectedSize, setSelectedSize] = useState<AdSize | null>(null);
-  const [adText, setAdText] = useState<{ headline: string; body: string } | null>(null);
+  const [adText, setAdText] = useState<AdText | null>(null);
   const [customPrompt, setCustomPrompt] = useState<string>('');
 
   useEffect(() => {
@@ -61,7 +61,7 @@ const App: React.FC = () => {
     setStep(4);
   };
   
-  const handleAdTextSubmit = (text: { headline: string; body: string }) => {
+  const handleAdTextSubmit = (text: AdText) => {
     setAdText(text);
     setStep(5);
   };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-import type { AnalysisResult, Scene, AdSize, UploadedImage } from '../types';
+import type { AnalysisResult, Scene, AdSize, UploadedImage, AdText } from '../types';
 import { generateFinalAdImage } from '../services/geminiService';
 import Spinner from './Spinner';
 import { DownloadIcon } from './icons/DownloadIcon';
@@ -12,13 +12,20 @@ interface FinalImageStepProps {
     uploadedImage: UploadedImage;
     scene: Scene;
     adSize: AdSize;
-    adText: { headline: string; body: string };
+    adText: AdText;
     analysisResult: AnalysisResult;
     customPrompt: string;
     onRestart: () => void;
     onBack: () => void;
     onGenerationStart: () => void;
 }
+
+const fontStyles = [
+  { key: 'Modern', label: 'حديث' },
+  { key: 'Elegant', label: 'أنيق' },
+  { key: 'Bold', label: 'عريض' },
+  { key: 'Playful', label: 'مرح' },
+];
 
 const FinalImageStep: React.FC<FinalImageStepProps> = ({
     isGenerating,
@@ -143,6 +150,8 @@ const FinalImageStep: React.FC<FinalImageStepProps> = ({
     }
 
     // Step 6: Confirm & Generate
+    const selectedStyleLabel = fontStyles.find(s => s.key === adText.fontStyle)?.label || adText.fontStyle;
+
     return (
         <div className="animate-fade-in">
             <div className="flex justify-between items-center mb-6">
@@ -168,6 +177,7 @@ const FinalImageStep: React.FC<FinalImageStepProps> = ({
                         <li><strong>حجم الإعلان:</strong> {adSize}</li>
                         <li><strong>العنوان:</strong> {adText.headline}</li>
                         <li><strong>النص الأساسي:</strong> {adText.body}</li>
+                        <li><strong>نمط الخط:</strong> {selectedStyleLabel}</li>
                         {customPrompt && <li><strong>تعليمات إضافية:</strong> {customPrompt}</li>}
                     </ul>
                 </div>
