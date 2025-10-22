@@ -8,6 +8,7 @@ import ImageUploadStep from './components/ImageUploadStep';
 import SceneSelectionStep from './components/SceneSelectionStep';
 import SizeSelectionStep from './components/SizeSelectionStep';
 import AdTextStep from './components/AdTextStep';
+import CustomPromptStep from './components/CustomPromptStep';
 import FinalImageStep from './components/FinalImageStep';
 
 const App: React.FC = () => {
@@ -19,6 +20,7 @@ const App: React.FC = () => {
   const [selectedScene, setSelectedScene] = useState<Scene | null>(null);
   const [selectedSize, setSelectedSize] = useState<AdSize | null>(null);
   const [adText, setAdText] = useState<{ headline: string; body: string } | null>(null);
+  const [customPrompt, setCustomPrompt] = useState<string>('');
 
   const handleAnalysisComplete = (result: AnalysisResult, image: UploadedImage) => {
     setAnalysisResult(result);
@@ -41,6 +43,11 @@ const App: React.FC = () => {
     setStep(5);
   };
 
+  const handleCustomPromptSubmit = (prompt: string) => {
+    setCustomPrompt(prompt);
+    setStep(6);
+  };
+
   const handleBack = () => {
     if (step > 1) {
       setStep(step - 1);
@@ -54,6 +61,7 @@ const App: React.FC = () => {
     setSelectedScene(null);
     setSelectedSize(null);
     setAdText(null);
+    setCustomPrompt('');
   };
 
   const renderStep = () => {
@@ -89,6 +97,13 @@ const App: React.FC = () => {
             />
          );
       case 5:
+        return (
+            <CustomPromptStep
+                onBack={handleBack}
+                onCustomPromptSubmit={handleCustomPromptSubmit}
+            />
+        );
+      case 6:
         if (!uploadedImage || !selectedScene || !selectedSize || !adText || !analysisResult) return null;
         return (
             <FinalImageStep
@@ -97,6 +112,7 @@ const App: React.FC = () => {
                 adSize={selectedSize}
                 adText={adText}
                 analysisResult={analysisResult}
+                customPrompt={customPrompt}
                 onRestart={handleRestart}
             />
         );

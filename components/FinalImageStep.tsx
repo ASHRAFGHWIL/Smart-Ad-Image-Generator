@@ -10,6 +10,7 @@ interface FinalImageStepProps {
   adSize: AdSize;
   adText: { headline: string; body: string };
   analysisResult: AnalysisResult;
+  customPrompt: string;
   onRestart: () => void;
 }
 
@@ -40,6 +41,7 @@ const FinalImageStep: React.FC<FinalImageStepProps> = ({
   adSize,
   adText,
   analysisResult,
+  customPrompt,
   onRestart,
 }) => {
   const [finalImageUrl, setFinalImageUrl] = useState<string | null>(null);
@@ -51,7 +53,7 @@ const FinalImageStep: React.FC<FinalImageStepProps> = ({
       setIsLoading(true);
       setError(null);
       try {
-        const imageUrl = await generateFinalImage(uploadedImage, scene, adText, adSize, analysisResult);
+        const imageUrl = await generateFinalImage(uploadedImage, scene, adText, adSize, analysisResult, customPrompt);
         setFinalImageUrl(imageUrl);
       } catch (err) {
         console.error(err);

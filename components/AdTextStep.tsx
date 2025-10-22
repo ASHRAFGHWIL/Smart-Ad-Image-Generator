@@ -101,7 +101,7 @@ const AdTextStep: React.FC<AdTextStepProps> = ({ productAnalysis, sceneDescripti
                 disabled={!headline || !body}
                 className="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 disabled:bg-cyan-800 disabled:cursor-not-allowed"
             >
-                المتابعة إلى الخطوة النهائية &larr;
+                المتابعة للتخصيص الإضافي &larr;
             </button>
         </div>
       </form>

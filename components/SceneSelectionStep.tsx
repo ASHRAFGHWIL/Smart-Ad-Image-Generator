@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 
 import { generateSceneDescriptions, generateSceneImage } from '../services/geminiService';
-import type { AnalysisResult, Scene } from '../types';
-import type { UploadedImage } from '../App';
+// FIX: Update import path for UploadedImage to point to the centralized types.ts file.
+import type { AnalysisResult, Scene, UploadedImage } from '../types';
 import Spinner from './Spinner';
 import SkeletonLoader from './SkeletonLoader';
 

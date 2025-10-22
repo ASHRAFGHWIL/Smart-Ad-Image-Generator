@@ -219,6 +219,7 @@ export const generateAdText = async (productAnalysis: string, sceneDescription: 
     adText: { headline: string; body: string },
     adSize: AdSize,
     analysisResult: AnalysisResult,
+    customPrompt: string,
   ): Promise<string> => {
     // Fetch the scene image data as base64
     const sceneResponse = await fetch(scene.imageUrl);
@@ -250,6 +251,14 @@ export const generateAdText = async (productAnalysis: string, sceneDescription: 
     
     const marketingDirectives = getSmartMarketingDirectives(analysisResult.analysis.materials);
     const colorPalette = analysisResult.colors;
+
+    const customInstructions = customPrompt.trim()
+    ? `
+      **Step 3.5: Additional User Instructions**
+      Carefully apply the following user-specific instructions to the image:
+      "${customPrompt}"
+    `
+    : '';
   
     const prompt = `
       Create a final, polished product advertisement image by following these steps precisely.
@@ -263,6 +272,7 @@ export const generateAdText = async (productAnalysis: string, sceneDescription: 
       **Step 3: Smart Marketing Engine Application**
       Apply the following intelligent marketing adjustments to the composite. These are critical for the final look and feel.
       ${marketingDirectives}
+      ${customInstructions}
       
       **Step 4: Text Integration**
       Add the following ad text onto the image:
