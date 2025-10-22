@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-// FIX: Import UploadedImage from the central types file.
 import type { AnalysisResult, Scene, AdSize, UploadedImage } from './types';
 
 // Components for each step
@@ -10,9 +9,12 @@ import SizeSelectionStep from './components/SizeSelectionStep';
 import AdTextStep from './components/AdTextStep';
 import CustomPromptStep from './components/CustomPromptStep';
 import FinalImageStep from './components/FinalImageStep';
+import ProgressBar from './components/ProgressBar';
+import ThemeSwitcher from './components/ThemeSwitcher';
 
 const App: React.FC = () => {
   const [step, setStep] = useState<number>(1);
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
   // Data collected through the steps
   const [uploadedImage, setUploadedImage] = useState<UploadedImage | null>(null);
@@ -21,6 +23,27 @@ const App: React.FC = () => {
   const [selectedSize, setSelectedSize] = useState<AdSize | null>(null);
   const [adText, setAdText] = useState<{ headline: string; body: string } | null>(null);
   const [customPrompt, setCustomPrompt] = useState<string>('');
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+    setTheme(initialTheme);
+  }, []);
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
+  };
 
   const handleAnalysisComplete = (result: AnalysisResult, image: UploadedImage) => {
     setAnalysisResult(result);
@@ -48,6 +71,10 @@ const App: React.FC = () => {
     setStep(6);
   };
 
+  const handleGenerationStart = () => {
+    setStep(7);
+  }
+
   const handleBack = () => {
     if (step > 1) {
       setStep(step - 1);
@@ -69,7 +96,7 @@ const App: React.FC = () => {
       case 1:
         return <ImageUploadStep onAnalysisComplete={handleAnalysisComplete} />;
       case 2:
-        if (!analysisResult || !uploadedImage) return null; // Or show an error/redirect
+        if (!analysisResult || !uploadedImage) return null;
         return (
           <SceneSelectionStep
             analysisResult={analysisResult}
@@ -103,10 +130,12 @@ const App: React.FC = () => {
                 onCustomPromptSubmit={handleCustomPromptSubmit}
             />
         );
-      case 6:
+      case 6: // Confirm & Generate
+      case 7: // View Result
         if (!uploadedImage || !selectedScene || !selectedSize || !adText || !analysisResult) return null;
         return (
             <FinalImageStep
+                isGenerating={step === 7}
                 uploadedImage={uploadedImage}
                 scene={selectedScene}
                 adSize={selectedSize}
@@ -114,6 +143,8 @@ const App: React.FC = () => {
                 analysisResult={analysisResult}
                 customPrompt={customPrompt}
                 onRestart={handleRestart}
+                onBack={handleBack}
+                onGenerationStart={handleGenerationStart}
             />
         );
       default:
@@ -122,19 +153,21 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="bg-gray-900 min-h-screen text-white font-sans flex flex-col items-center p-4 sm:p-8">
-       <header className="text-center mb-8">
-        <h1 className="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-teal-500">
-          مولّد الإعلانات بالذكاء الاصطناعي
+    <div className="bg-[#F8F9FB] dark:bg-gray-900 min-h-screen text-[#1A1A1A] dark:text-gray-100 font-cairo flex flex-col items-center p-4 sm:p-8">
+       <header className="w-full max-w-5xl text-center mb-8 relative">
+        <h1 className="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#007BFF] to-[#8A2BE2] font-poppins">
+          منشئ الصور الإعلانية الذكي
         </h1>
-        <p className="text-gray-400 mt-2 text-lg">
+        <p className="text-gray-600 dark:text-gray-400 mt-2 text-lg">
           حوّل صور منتجاتك إلى إعلانات مذهلة في خطوات بسيطة
         </p>
+        <ThemeSwitcher theme={theme} toggleTheme={toggleTheme} />
       </header>
-      <main className="w-full max-w-5xl bg-gray-800/50 rounded-2xl shadow-2xl p-6 sm:p-10 border border-gray-700 backdrop-blur-sm">
+      <main className="w-full max-w-5xl bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 sm:p-10 border border-gray-200 dark:border-gray-700">
+        <ProgressBar currentStep={step} totalSteps={7} />
         {renderStep()}
       </main>
-      <footer className="text-center mt-8 text-gray-500 text-sm">
+      <footer className="text-center mt-8 text-gray-500 dark:text-gray-400 text-sm">
         <p>Powered by Google Gemini</p>
       </footer>
     </div>

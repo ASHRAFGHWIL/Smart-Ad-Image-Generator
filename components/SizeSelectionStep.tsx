@@ -18,14 +18,14 @@ const SizeSelectionStep: React.FC<SizeSelectionStepProps> = ({ onBack, onSizeSel
     <div className="animate-fade-in">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-cyan-300">
+          <h2 className="text-2xl font-bold text-[#1A1A1A] dark:text-gray-100 font-poppins">
             الخطوة الثالثة: اختيار حجم الإعلان
           </h2>
-          <p className="text-gray-400">
+          <p className="text-gray-600 dark:text-gray-400">
             اختر الأبعاد المناسبة لحملتك الإعلانية.
           </p>
         </div>
-        <button onClick={onBack} className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 text-sm">
+        <button onClick={onBack} className="bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 font-bold py-2 px-4 rounded-lg transition-colors duration-300 text-sm">
           &rarr; العودة
         </button>
       </div>
@@ -35,11 +35,11 @@ const SizeSelectionStep: React.FC<SizeSelectionStepProps> = ({ onBack, onSizeSel
           <button
             key={size}
             onClick={() => onSizeSelect(size)}
-            className="group p-6 bg-gray-800 rounded-lg border-2 border-gray-700 hover:border-cyan-400 hover:bg-gray-700/50 transition-all duration-300 flex flex-col items-center justify-center aspect-square"
+            className="group p-6 bg-white dark:bg-gray-700/50 rounded-lg border-2 border-gray-200 dark:border-gray-600 hover:border-[#007BFF] hover:bg-blue-50 dark:hover:bg-gray-700 transition-all duration-300 flex flex-col items-center justify-center aspect-square shadow-sm hover:shadow-xl"
           >
-            <div className="text-2xl font-bold text-cyan-400 group-hover:scale-110 transition-transform">{label}</div>
-            <div className="text-lg text-gray-300 mt-2">{size}</div>
-            <div className="text-sm text-gray-500 mt-1">{dimensions}</div>
+            <div className="text-2xl font-bold text-[#007BFF] group-hover:scale-110 transition-transform">{label}</div>
+            <div className="text-lg text-gray-800 dark:text-gray-200 mt-2">{size}</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">{dimensions}</div>
           </button>
         ))}
       </div>

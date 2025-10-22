@@ -7,7 +7,7 @@ interface SkeletonLoaderProps {
 const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({ className }) => {
   return (
     <div
-      className={`bg-gray-700 animate-pulse ${className}`}
+      className={`bg-gray-200 dark:bg-gray-700 animate-pulse ${className}`}
       role="status"
       aria-label="loading content"
     >

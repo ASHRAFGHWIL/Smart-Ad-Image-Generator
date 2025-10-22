@@ -2,9 +2,7 @@ import React, { useState, useCallback } from 'react';
 
 import { analyzeImageAndExtractColors } from '../services/geminiService';
 import type { AnalysisResult } from '../types';
-// FIX: Update import path for UploadedImage to point to the centralized types.ts file.
 import type { UploadedImage } from '../types';
-import ColorPalette from './ColorPalette';
 import Spinner from './Spinner';
 import { UploadIcon } from './icons/UploadIcon';
 
@@ -20,17 +18,6 @@ interface ImageUploadStepProps {
     onAnalysisComplete: (result: AnalysisResult, image: UploadedImage) => void;
 }
 
-const AnalysisDisplay: React.FC<{ analysis: AnalysisResult['analysis'] }> = ({ analysis }) => (
-  <div className="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
-      <h3 className="text-lg font-semibold text-gray-300 mb-3">تحليل الصورة</h3>
-      <div className="space-y-2 text-gray-400">
-          <p><strong className="font-semibold text-cyan-400">الخامات:</strong> {analysis.materials}</p>
-          <p><strong className="font-semibold text-cyan-400">الإضاءة:</strong> {analysis.lighting}</p>
-          <p><strong className="font-semibold text-cyan-400">الظلال:</strong> {analysis.shadows}</p>
-      </div>
-  </div>
-);
-
 const ImageUploadStep: React.FC<ImageUploadStepProps> = ({ onAnalysisComplete }) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
@@ -44,7 +31,6 @@ const ImageUploadStep: React.FC<ImageUploadStepProps> = ({ onAnalysisComplete })
     setIsLoading(true);
     setError(null);
     setAnalysisResult(null);
-    // Revoke previous URL if it exists
     if (imageUrl) {
         URL.revokeObjectURL(imageUrl);
     }
@@ -64,7 +50,6 @@ const ImageUploadStep: React.FC<ImageUploadStepProps> = ({ onAnalysisComplete })
       const base64Data = await fileToBase64(file);
       const result = await analyzeImageAndExtractColors(base64Data, file.type);
       setAnalysisResult(result);
-      // On success, notify the parent component to proceed to the next step
       onAnalysisComplete(result, { data: base64Data, mimeType: file.type });
 
     } catch (err) {
@@ -81,25 +66,23 @@ const ImageUploadStep: React.FC<ImageUploadStepProps> = ({ onAnalysisComplete })
     }
   }, [imageUrl, onAnalysisComplete]);
 
-  // This component will only show analysis results briefly before App component switches to Step 2
-  // We keep this structure in case we want to show both steps on one page later.
   const showResults = imageUrl && !isLoading && analysisResult;
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-center text-cyan-300 mb-2">
+      <h2 className="text-2xl font-bold text-center text-[#1A1A1A] dark:text-gray-100 mb-2 font-poppins">
         الخطوة الأولى: رفع صورة المنتج وتحليلها
       </h2>
-      <p className="text-center text-gray-400 mb-6">
+      <p className="text-center text-gray-600 dark:text-gray-400 mb-6">
         ارفع صورة منتجك ليقوم الذكاء الاصطناعي بتحليلها واستخراج لوحة الألوان الخاصة بها.
       </p>
 
       {!imageUrl && !isLoading && (
-        <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-600 rounded-lg hover:border-cyan-400 transition-colors duration-300">
-          <UploadIcon className="w-12 h-12 text-gray-500 mb-4" />
+        <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-[#007BFF] transition-colors duration-300 bg-gray-50 dark:bg-gray-800/50">
+          <UploadIcon className="w-12 h-12 text-gray-400 dark:text-gray-500 mb-4" />
           <label
             htmlFor="file-upload"
-            className="relative cursor-pointer bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-300"
+            className="relative cursor-pointer text-white font-cairo font-bold bg-gradient-to-r from-[#007BFF] to-[#8A2BE2] hover:from-[#006ae0] hover:to-[#7925c7] rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 py-3 px-6"
           >
             <span>رفع صورة المنتج</span>
             <input
@@ -112,24 +95,24 @@ const ImageUploadStep: React.FC<ImageUploadStepProps> = ({ onAnalysisComplete })
               disabled={isLoading}
             />
           </label>
-          <p className="mt-2 text-sm text-gray-500">JPG, PNG</p>
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">JPG, PNG</p>
         </div>
       )}
 
       {isLoading && (
         <div className="flex flex-col items-center justify-center p-8 min-h-[200px]">
           <Spinner />
-          <p className="mt-4 text-cyan-400 animate-pulse">جاري تحليل الصورة...</p>
+          <p className="mt-4 text-[#007BFF] animate-pulse">جاري تحليل الصورة...</p>
         </div>
       )}
 
       {error && !isLoading && (
-        <div className="my-4 p-4 bg-red-900/50 border border-red-500 text-red-300 rounded-lg text-center">
+        <div className="my-4 p-4 bg-red-100 dark:bg-red-900/50 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 rounded-lg text-center">
           <p className="font-semibold mb-2">حدث خطأ</p>
           <p>{error}</p>
           <button 
              onClick={() => { setError(null); setImageUrl(null); }} 
-             className="mt-2 bg-red-700 hover:bg-red-800 text-white font-bold py-1 px-3 rounded-lg"
+             className="mt-2 bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded-lg"
            >
              حاول مرة أخرى
            </button>
@@ -139,7 +122,7 @@ const ImageUploadStep: React.FC<ImageUploadStepProps> = ({ onAnalysisComplete })
       {showResults && (
          <div className="text-center p-8">
             <Spinner />
-            <p className="mt-4 text-cyan-400">اكتمل التحليل! جاري إعداد المشاهد...</p>
+            <p className="mt-4 text-[#007BFF]">اكتمل التحليل! جاري إعداد المشاهد...</p>
          </div>
       )}
     </div>

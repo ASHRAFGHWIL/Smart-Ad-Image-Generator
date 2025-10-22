@@ -1,311 +1,208 @@
-import { GoogleGenAI, Type, Modality } from '@google/genai';
-import type { AnalysisResult, AdSize, Scene, UploadedImage } from '../types';
+import { GoogleGenAI, Type, Modality } from "@google/genai";
+import type { AnalysisResult, UploadedImage } from "../types";
 
-// Per guidelines, initialize with API_KEY from environment variables.
+// Always use new GoogleGenAI({apiKey: process.env.API_KEY});
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-const analysisSchema = {
-  type: Type.OBJECT,
-  properties: {
-    colors: {
-      type: Type.ARRAY,
-      description: 'A color palette of 6 hex codes extracted from the product image that are visually appealing together.',
-      items: { type: Type.STRING },
-    },
-    analysis: {
-      type: Type.OBJECT,
-      properties: {
-        materials: {
-          type: Type.STRING,
-          description: 'A brief, 1-2 sentence analysis of the product\'s primary materials and textures.',
-        },
-        lighting: {
-          type: Type.STRING,
-          description: 'A brief, 1-2 sentence analysis of the lighting in the image (e.g., soft, hard, warm, cool).',
-        },
-        shadows: {
-          type: Type.STRING,
-          description: 'A brief, 1-2 sentence analysis of the shadows in the image (e.g., long, soft, defined).',
-        },
-      },
-      required: ['materials', 'lighting', 'shadows'],
-    },
-  },
-  required: ['colors', 'analysis'],
-};
-
-
-export const analyzeImageAndExtractColors = async (base64Data: string, mimeType: string): Promise<AnalysisResult> => {
+// Function to analyze the uploaded image and extract colors and properties.
+export const analyzeImageAndExtractColors = async (
+  base64ImageData: string,
+  mimeType: string
+): Promise<AnalysisResult> => {
+  // FIX: Use gemini-2.5-pro for complex reasoning and JSON output.
+  const model = "gemini-2.5-pro";
   const imagePart = {
     inlineData: {
-      data: base64Data,
-      mimeType,
+      data: base64ImageData,
+      mimeType: mimeType,
     },
   };
 
-  const textPart = {
-    text: `Analyze the provided product image. Identify the key visual characteristics and extract a harmonious color palette.
-    Follow the JSON schema precisely.
-    - Analyze the materials, lighting, and shadows. Keep the analysis concise and descriptive.
-    - Extract a color palette of exactly 6 hex codes from the image. The colors should be complementary and suitable for a marketing campaign.
-    `,
-  };
+  const prompt = `Analyze the product in this image. Focus on its materials, lighting, and shadows. Also, extract a vibrant and cohesive 5-color palette from the image. The colors should be in hex format. Return a JSON object with this structure: { "colors": ["#...", "#...", ...], "analysis": { "materials": "...", "lighting": "...", "shadows": "..." } }.`;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-pro', // Pro model for better analysis and JSON following
-    contents: { parts: [imagePart, textPart] },
+    model,
+    contents: { parts: [imagePart, { text: prompt }] },
     config: {
-      responseMimeType: 'application/json',
-      responseSchema: analysisSchema,
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          colors: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING },
+          },
+          analysis: {
+            type: Type.OBJECT,
+            properties: {
+              materials: { type: Type.STRING },
+              lighting: { type: Type.STRING },
+              shadows: { type: Type.STRING },
+            },
+            required: ["materials", "lighting", "shadows"],
+          },
+        },
+        required: ["colors", "analysis"],
+      },
     },
   });
-  
-  const jsonString = response.text.trim();
+
   try {
-    return JSON.parse(jsonString) as AnalysisResult;
+    // FIX: Access the text property directly to get the response.
+    const jsonString = response.text.trim();
+    const result = JSON.parse(jsonString);
+    return result as AnalysisResult;
   } catch (e) {
-    console.error("Failed to parse JSON response:", jsonString, e);
-    throw new Error("The response from the AI was not valid JSON.");
+    console.error("Failed to parse JSON response:", response.text);
+    throw new Error("Could not parse the analysis from the AI response.");
   }
 };
 
-
-export const generateSceneDescriptions = async (analysis: AnalysisResult['analysis']): Promise<string[]> => {
-  const prompt = `
-    Based on the following analysis of a product image, generate 10 distinct, creative, and photorealistic scene descriptions to be used as backgrounds for a product advertisement.
-    The scenes should be visually compelling and align with the product's characteristics.
-    Focus on creating a mood and environment. Do not mention the product itself.
-    Each description should be a concise phrase, no more than 15 words.
-
-    Product Analysis:
-    - Materials: ${analysis.materials}
-    - Lighting: ${analysis.lighting}
-    - Shadows: ${analysis.shadows}
-
-    Return the descriptions as a JSON array of 10 strings. For example: ["A serene misty forest at dawn", "A minimalist sun-drenched concrete interior"].
-  `;
+// Function to generate scene descriptions based on image analysis.
+export const generateSceneDescriptions = async (
+  analysis: AnalysisResult["analysis"]
+): Promise<string[]> => {
+  // FIX: Use gemini-2.5-flash for basic text generation.
+  const model = "gemini-2.5-flash";
+  const prompt = `Based on this product analysis, generate 10 diverse and creative scene descriptions for a product advertisement photo shoot. The scenes should be visually appealing and complement the product's characteristics.
+  Product Analysis:
+  - Materials: ${analysis.materials}
+  - Lighting: ${analysis.lighting}
+  - Shadows: ${analysis.shadows}
+  
+  Return a JSON object with a single key "scenes" which is an array of 10 strings. Example: { "scenes": ["A sun-drenched beach with the product resting on a smooth, weathered driftwood log.", "A minimalist studio setting with a single, dramatic spotlight on the product.", ...] }`;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
+    model,
     contents: prompt,
     config: {
-      responseMimeType: 'application/json',
+      responseMimeType: "application/json",
       responseSchema: {
-        type: Type.ARRAY,
-        items: { type: Type.STRING }
+        type: Type.OBJECT,
+        properties: {
+          scenes: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING },
+          },
+        },
+        required: ["scenes"],
       },
-      temperature: 0.8,
     },
   });
-  
-  const jsonString = response.text.trim();
+
   try {
-    const descriptions = JSON.parse(jsonString) as string[];
-    if (!Array.isArray(descriptions) || descriptions.some(d => typeof d !== 'string')) {
-      throw new Error("Invalid format for descriptions.");
+    const jsonString = response.text.trim();
+    const result = JSON.parse(jsonString);
+    if (result.scenes && Array.isArray(result.scenes)) {
+        return result.scenes;
     }
-    return descriptions;
+    throw new Error("Invalid format for scene descriptions.");
   } catch (e) {
-    console.error("Failed to parse JSON response for scene descriptions:", jsonString, e);
-    throw new Error("The response from the AI was not valid JSON for scene descriptions.");
+    console.error("Failed to parse JSON response for scenes:", response.text);
+    throw new Error("Could not parse scene descriptions from the AI response.");
   }
 };
 
+// Function to generate an image for a scene description.
 export const generateSceneImage = async (description: string): Promise<string> => {
-  const response = await ai.models.generateImages({
-    model: 'imagen-4.0-generate-001',
-    prompt: `Photorealistic ad background: ${description}. High-end, professional photography, 8k, ultra-detailed. No text or logos.`,
+    // FIX: Use gemini-2.5-flash-image for general image generation.
+    const model = 'gemini-2.5-flash-image';
+    const response = await ai.models.generateContent({
+        model,
+        contents: {
+            parts: [{ text: `Generate a high-quality, photorealistic background image for a product advertisement. The scene should be: ${description}. The image should be just the background, with no product in it. It should be suitable to place a product image on top of it.` }],
+        },
+        config: {
+            // FIX: responseModalities must be an array with a single Modality.IMAGE element.
+            responseModalities: [Modality.IMAGE],
+        },
+    });
+
+    for (const part of response.candidates[0].content.parts) {
+        if (part.inlineData) {
+            const base64ImageBytes: string = part.inlineData.data;
+            return `data:image/png;base64,${base64ImageBytes}`;
+        }
+    }
+    throw new Error('Image generation failed, no image data received.');
+};
+
+// Function to generate ad text.
+export const generateAdText = async (
+  productAnalysis: string,
+  sceneDescription: string
+): Promise<{ headline: string; body:string }> => {
+  const model = "gemini-2.5-flash";
+  const prompt = `Create a compelling ad copy for a product with the following analysis, placed in the described scene. Generate a short, catchy headline (max 50 characters) and a slightly longer body text (max 150 characters) that highlights the product's best features.
+  
+  Product Analysis: ${productAnalysis}
+  Scene: ${sceneDescription}
+  
+  Return a JSON object with this structure: { "headline": "...", "body": "..." }`;
+  
+  const response = await ai.models.generateContent({
+    model,
+    contents: prompt,
     config: {
-      numberOfImages: 1,
-      aspectRatio: '1:1', // The scene selection shows square images
-      outputMimeType: 'image/png',
+        responseMimeType: "application/json",
+        responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+                headline: { type: Type.STRING },
+                body: { type: Type.STRING },
+            },
+            required: ["headline", "body"],
+        },
     },
   });
 
-  const base64ImageBytes = response.generatedImages[0].image.imageBytes;
-  return `data:image/png;base64,${base64ImageBytes}`;
-};
-
-
-export const generateAdText = async (productAnalysis: string, sceneDescription: string): Promise<{ headline: string; body: string }> => {
-    const prompt = `
-      Generate a compelling headline and body text for a product advertisement.
-      The ad should be short, punchy, and enticing, suitable for a modern audience.
-      
-      Product analysis: "${productAnalysis}"
-      Scene description: "${sceneDescription}"
-  
-      Return a JSON object with "headline" and "body" keys.
-      Headline should be a short, attention-grabbing phrase (max 10 words).
-      Body should be a concise descriptive text (max 25 words).
-    `;
-  
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            headline: { type: Type.STRING },
-            body: { type: Type.STRING },
-          },
-          required: ['headline', 'body'],
-        },
-        temperature: 0.7,
-      },
-    });
-  
+  try {
     const jsonString = response.text.trim();
-    try {
-      return JSON.parse(jsonString);
-    } catch (e) {
-      console.error("Failed to parse JSON response for ad text:", jsonString, e);
-      throw new Error("The response from the AI was not valid JSON for ad text.");
-    }
-  };
-
-  const getSmartMarketingDirectives = (productMaterials: string): string => {
-    const materials = productMaterials.toLowerCase();
-    if (materials.includes('wood') || materials.includes('natural') || materials.includes('organic') || materials.includes('plant')) {
-        return `
-- **Product Type**: Wooden/Natural
-- **Lighting Tone**: Apply a warm, golden-amber light cast onto the product.
-- **Background Vibe**: Ensure the overall mood is cozy and natural.
-- **Emotional Goal**: Evoke feelings of trust and warmth.
-- **Visual Adjustments**: Enhance color contrast, cast soft, natural shadow angles, and add a subtle matte sheen to the product's surface.`;
-    }
-    if (materials.includes('metal') || materials.includes('steel') || materials.includes('industrial') || materials.includes('chrome')) {
-        return `
-- **Product Type**: Metallic/Industrial
-- **Lighting Tone**: Apply a cool, silver-blue light to highlight the product.
-- **Background Vibe**: The scene should feel modern and minimalist.
-- **Emotional Goal**: Convey strength and precision.
-- **Visual Adjustments**: Maximize color contrast, create sharp, defined shadow angles, and add a strong gloss and reflection effect to the product.`;
-    }
-    if (materials.includes('fabric') || materials.includes('textile') || materials.includes('handmade') || materials.includes('woven')) {
-         return `
-- **Product Type**: Handmade/Textiles
-- **Lighting Tone**: Use soft, diffused lighting.
-- **Background Vibe**: The scene should be elegant and gentle.
-- **Emotional Goal**: Inspire a sense of intimacy and craftsmanship.
-- **Visual Adjustments**: Use a gentle color contrast, soft shadow angles, and avoid any harsh gloss or reflection.`;
-    }
-    if (materials.includes('electronic') || materials.includes('plastic') || materials.includes('tech') || materials.includes('device')) {
-        return `
-- **Product Type**: Tech/Electronic
-- **Lighting Tone**: Use neutral, balanced studio lighting.
-- **Background Vibe**: The background should be dark and futuristic.
-- **Emotional Goal**: Suggest innovation and focus.
-- **Visual Adjustments**: Use high color contrast (e.g., cyan/white text on dark background), create subtle shadows, and add a slight sheen to plastic/glass surfaces.`;
-    }
-    if (materials.includes('jewelry') || materials.includes('luxury') || materials.includes('gemstone') || materials.includes('gold') || materials.includes('silver')) {
-        return `
-- **Product Type**: Luxury/Jewelry
-- **Lighting Tone**: Apply a bright, sparkling golden light.
-- **Background Vibe**: The background should feel luxurious and glossy.
-- **Emotional Goal**: Create a sense of elegance and desire.
-- **Visual Adjustments**: Use high contrast, add dramatic shadows, and apply a strong sparkle and reflection effect to the product.`;
-    }
-    return `
-- **Product Type**: General
-- **Instructions**: Analyze the product and apply the most fitting lighting, shadows, and effects to create a professional and appealing advertisement.`;
+    const result = JSON.parse(jsonString);
+    return result;
+  } catch (e) {
+    console.error("Failed to parse JSON response for ad text:", response.text);
+    throw new Error("Could not parse ad text from the AI response.");
+  }
 };
-  
-  export const generateFinalImage = async (
-    productImage: UploadedImage,
-    scene: Scene,
-    adText: { headline: string; body: string },
-    adSize: AdSize,
-    analysisResult: AnalysisResult,
-    customPrompt: string,
-  ): Promise<string> => {
-    // Fetch the scene image data as base64
-    const sceneResponse = await fetch(scene.imageUrl);
-    const sceneBlob = await sceneResponse.blob();
-    const sceneBase64 = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
-      reader.onerror = reject;
-      reader.readAsDataURL(sceneBlob);
-    });
-  
-  
-    const productPart = {
-      inlineData: {
-        data: productImage.data,
-        mimeType: productImage.mimeType,
-      },
-    };
-  
-    const scenePart = {
-      inlineData: {
-        data: sceneBase64,
-        mimeType: 'image/png', // generateSceneImage produces PNG
-      },
-    };
-  
-    const [width, height] = adSize.split('x').map(Number);
-    const isVertical = height > width;
-    
-    const marketingDirectives = getSmartMarketingDirectives(analysisResult.analysis.materials);
-    const colorPalette = analysisResult.colors;
 
-    const customInstructions = customPrompt.trim()
-    ? `
-      **Step 3.5: Additional User Instructions**
-      Carefully apply the following user-specific instructions to the image:
-      "${customPrompt}"
-    `
-    : '';
-  
+// Function to generate the final ad image by editing/compositing.
+export const generateFinalAdImage = async (
+    productImage: UploadedImage,
+    sceneDescription: string,
+    adText: { headline: string; body: string },
+    customPrompt: string
+): Promise<string> => {
+    const model = 'gemini-2.5-flash-image';
     const prompt = `
-      Create a final, polished product advertisement image by following these steps precisely.
-      
-      **Step 1: Product Preparation**
-      Accurately remove the background from the provided product image, making it transparent. Preserve all details, edges, and textures of the product.
-      
-      **Step 2: Scene Composition**
-      Use the provided scene image as the new background. Seamlessly composite the background-removed product onto the scene. The product must be the clear focus, realistically scaled and placed within the environment.
-      
-      **Step 3: Smart Marketing Engine Application**
-      Apply the following intelligent marketing adjustments to the composite. These are critical for the final look and feel.
-      ${marketingDirectives}
-      ${customInstructions}
-      
-      **Step 4: Text Integration**
-      Add the following ad text onto the image:
-          - Headline: "${adText.headline}"
-          - Body: "${adText.body}"
-      The text should be stylishly and professionally placed. The headline must be larger than the body text. Use the provided color palette for the text, choosing colors that have high contrast against their immediate background for maximum readability.
-      
-      **Step 5: Final Output Specifications**
-      - The final image dimensions must be exactly ${width}x${height} pixels.
-      - Do not add any other logos, watermarks, or text.
-      - The final output must be a single, photorealistic, high-quality composite image.
-      
-      **Color Palette for text**: ${colorPalette.join(', ')}
-      **Layout hint**: For ${isVertical ? 'vertical' : 'horizontal'} layouts, consider placing text at the ${isVertical ? 'top or bottom' : 'side'}.
-    `;
-  
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-image',
-      contents: { parts: [
-        { text: prompt },
-        productPart,
-        scenePart
-      ]},
-      config: {
-        responseModalities: [Modality.IMAGE],
-      },
-    });
+    Task: Create a final advertisement image by compositing a product into a scene and adding text.
+    1. First, generate a background scene described as: "${sceneDescription}".
+    2. Then, seamlessly place the provided product image into that scene. It's critical to match the product's original lighting and shadows to make it look completely natural in its new environment.
+    3. Finally, add the following advertising text onto the image. Headline: "${adText.headline}". Body: "${adText.body}". The text should be placed in a visually appealing location, using a stylish and readable font, without obscuring the main product.
+    ${customPrompt ? `4. Apply this final user instruction: "${customPrompt}"` : ''}
     
-    const part = response.candidates?.[0]?.content?.parts?.[0];
-    if (part?.inlineData) {
-      const base64ImageBytes: string = part.inlineData.data;
-      return `data:image/png;base64,${base64ImageBytes}`;
+    The final output must be a single, complete advertisement image that combines all these elements.
+    `;
+
+    const response = await ai.models.generateContent({
+        model,
+        contents: {
+            parts: [
+                { inlineData: { data: productImage.data, mimeType: productImage.mimeType } },
+                { text: prompt },
+            ],
+        },
+        config: {
+            responseModalities: [Modality.IMAGE],
+        },
+    });
+
+    for (const part of response.candidates[0].content.parts) {
+        if (part.inlineData) {
+            const base64ImageBytes: string = part.inlineData.data;
+            return `data:image/png;base64,${base64ImageBytes}`;
+        }
     }
-  
-    throw new Error('Failed to generate the final ad image.');
-  };
+
+    throw new Error('Final image generation failed.');
+};
