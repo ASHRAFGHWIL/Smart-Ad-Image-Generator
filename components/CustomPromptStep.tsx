@@ -3,10 +3,11 @@ import React, { useState } from 'react';
 interface CustomPromptStepProps {
   onBack: () => void;
   onCustomPromptSubmit: (prompt: string) => void;
+  initialPrompt?: string;
 }
 
-const CustomPromptStep: React.FC<CustomPromptStepProps> = ({ onBack, onCustomPromptSubmit }) => {
-  const [prompt, setPrompt] = useState('');
+const CustomPromptStep: React.FC<CustomPromptStepProps> = ({ onBack, onCustomPromptSubmit, initialPrompt }) => {
+  const [prompt, setPrompt] = useState(initialPrompt || '');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,7 +50,7 @@ const CustomPromptStep: React.FC<CustomPromptStepProps> = ({ onBack, onCustomPro
             type="submit"
             className="w-full text-white font-cairo font-bold bg-gradient-to-r from-[#007BFF] to-[#8A2BE2] hover:from-[#006ae0] hover:to-[#7925c7] rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 py-3 px-6"
           >
-            {prompt ? 'تطبيق التعليمات والمتابعة' : 'تخطي والمتابعة'} &larr;
+            {prompt && !initialPrompt ? 'تطبيق التعليمات والمتابعة' : 'المتابعة للمراجعة النهائية'} &larr;
           </button>
         </div>
       </form>

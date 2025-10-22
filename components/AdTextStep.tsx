@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { generateAdText } from '../services/geminiService';
 import Spinner from './Spinner';
 import type { AdText } from '../types';
@@ -8,6 +8,7 @@ interface AdTextStepProps {
   sceneDescription: string;
   onBack: () => void;
   onAdTextSubmit: (text: AdText) => void;
+  initialFontStyle?: string;
 }
 
 const fontStyles = [
@@ -26,12 +27,18 @@ const countWords = (str: string) => {
   return str.trim().split(/\s+/).length;
 };
 
-const AdTextStep: React.FC<AdTextStepProps> = ({ productAnalysis, sceneDescription, onBack, onAdTextSubmit }) => {
+const AdTextStep: React.FC<AdTextStepProps> = ({ productAnalysis, sceneDescription, onBack, onAdTextSubmit, initialFontStyle }) => {
   const [headline, setHeadline] = useState('');
   const [body, setBody] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [fontStyle, setFontStyle] = useState('Modern');
+  const [fontStyle, setFontStyle] = useState(initialFontStyle || 'Modern');
+
+  useEffect(() => {
+    if (initialFontStyle) {
+      setFontStyle(initialFontStyle);
+    }
+  }, [initialFontStyle]);
 
   const handleGenerateText = async () => {
     setIsLoading(true);
@@ -111,6 +118,18 @@ const AdTextStep: React.FC<AdTextStepProps> = ({ productAnalysis, sceneDescripti
         </div>
 
         <div>
+            <h4 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">معاينة حية</h4>
+            <div className={`text-center p-6 rounded-lg bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 shadow-inner ${fontClassName}`}>
+                <h3 className="text-3xl font-bold text-gray-900 dark:text-gray-100 break-words min-h-[1.2em]">
+                    {headline || '[العنوان الرئيسي هنا]'}
+                </h3>
+                <p className="mt-2 text-base text-gray-600 dark:text-gray-400 break-words min-h-[3em]">
+                    {body || '[النص الأساسي هنا...]'}
+                </p>
+            </div>
+        </div>
+
+        <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">نمط الخط</label>
           <div className="flex flex-wrap gap-3">
             {fontStyles.map(style => (
@@ -128,18 +147,6 @@ const AdTextStep: React.FC<AdTextStepProps> = ({ productAnalysis, sceneDescripti
               </button>
             ))}
           </div>
-        </div>
-
-        <div className="mt-8 p-6 bg-gray-100 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
-            <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 text-center">معاينة حية</h4>
-            <div className={`text-center p-4 rounded-md bg-white dark:bg-gray-800 shadow-inner ${fontClassName}`}>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 break-words min-h-[1em]">
-                    {headline || '[العنوان الرئيسي هنا]'}
-                </h3>
-                <p className="mt-2 text-gray-600 dark:text-gray-400 break-words min-h-[3em]">
-                    {body || '[النص الأساسي هنا...]'}
-                </p>
-            </div>
         </div>
         
         {error && (

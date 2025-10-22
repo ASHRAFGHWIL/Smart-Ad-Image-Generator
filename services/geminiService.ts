@@ -61,16 +61,16 @@ export const analyzeImageAndExtractColors = async (
 // Function to generate scene descriptions based on image analysis.
 export const generateSceneDescriptions = async (
   analysis: AnalysisResult["analysis"]
-): Promise<string[]> => {
-  // FIX: Use gemini-2.5-flash for basic text generation.
+): Promise<{ description: string; category: string }[]> => {
   const model = "gemini-2.5-flash";
-  const prompt = `Based on this product analysis, generate 10 diverse and creative scene descriptions for a product advertisement photo shoot. The scenes should be visually appealing and complement the product's characteristics.
+  const prompt = `Based on this product analysis, generate 10 diverse and creative scene descriptions for a product advertisement photo shoot. The scenes should be visually appealing and complement the product's characteristics. For each scene, provide a category from this list: 'Outdoor', 'Studio', 'Minimalist', 'Luxury', 'Abstract', 'Cozy'.
+  
   Product Analysis:
   - Materials: ${analysis.materials}
   - Lighting: ${analysis.lighting}
   - Shadows: ${analysis.shadows}
   
-  Return a JSON object with a single key "scenes" which is an array of 10 strings. Example: { "scenes": ["A sun-drenched beach with the product resting on a smooth, weathered driftwood log.", "A minimalist studio setting with a single, dramatic spotlight on the product.", ...] }`;
+  Return a JSON object with a single key "scenes" which is an array of 10 objects. Each object must have "description" and "category" keys. Example: { "scenes": [{ "description": "A sun-drenched beach...", "category": "Outdoor" }, { "description": "A minimalist studio setting...", "category": "Minimalist" }] }`;
 
   const response = await ai.models.generateContent({
     model,
@@ -82,7 +82,14 @@ export const generateSceneDescriptions = async (
         properties: {
           scenes: {
             type: Type.ARRAY,
-            items: { type: Type.STRING },
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                description: { type: Type.STRING },
+                category: { type: Type.STRING },
+              },
+              required: ["description", "category"],
+            },
           },
         },
         required: ["scenes"],
@@ -101,6 +108,21 @@ export const generateSceneDescriptions = async (
     console.error("Failed to parse JSON response for scenes:", response.text);
     throw new Error("Could not parse scene descriptions from the AI response.");
   }
+};
+
+// Function to categorize a single scene description.
+export const categorizeSceneDescription = async (description: string): Promise<string> => {
+    const model = "gemini-2.5-flash";
+    const prompt = `Categorize the following scene description into one of these categories: Outdoor, Studio, Minimalist, Luxury, Abstract, Cozy. Respond with only the category name as a single word. If no category fits well, respond with 'Studio'. Description: "${description}"`;
+
+    const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+    });
+    
+    const category = response.text.trim();
+    const validCategories = ['Outdoor', 'Studio', 'Minimalist', 'Luxury', 'Abstract', 'Cozy'];
+    return validCategories.includes(category) ? category : 'Studio';
 };
 
 // Function to generate an image for a scene description.

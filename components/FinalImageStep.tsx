@@ -167,6 +167,7 @@ const FinalImageStep: React.FC<FinalImageStepProps> = ({
                 {isZoomed && (
                     <div
                         className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 animate-fade-in"
+                        onClick={(e) => { if (e.target === e.currentTarget) setIsZoomed(false); }}
                     >
                         <button
                             onClick={() => setIsZoomed(false)}
@@ -178,23 +179,25 @@ const FinalImageStep: React.FC<FinalImageStepProps> = ({
                         <TransformWrapper
                             initialScale={1}
                             minScale={0.5}
-                            maxScale={8}
+                            maxScale={2}
                             limitToBounds={true}
                             doubleClick={{ disabled: true }}
+                            centerOnInit={true}
                         >
-                            {({ zoomIn, zoomOut, resetTransform }) => (
+                            {({ zoomIn, zoomOut, resetTransform, centerView }) => (
                                 <>
                                     <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2 p-2 bg-gray-900/50 rounded-lg backdrop-blur-sm">
-                                        <button onClick={() => zoomIn(0.5)} className="p-2 text-white hover:bg-white/20 rounded-md transition-colors" aria-label="Zoom In"><ZoomIcon className="w-6 h-6"/></button>
-                                        <button onClick={() => zoomOut(0.5)} className="p-2 text-white hover:bg-white/20 rounded-md transition-colors" aria-label="Zoom Out"><ZoomOutIcon className="w-6 h-6" /></button>
+                                        <button onClick={() => zoomIn()} className="p-2 text-white hover:bg-white/20 rounded-md transition-colors" aria-label="Zoom In"><ZoomIcon className="w-6 h-6"/></button>
+                                        <button onClick={() => zoomOut()} className="p-2 text-white hover:bg-white/20 rounded-md transition-colors" aria-label="Zoom Out"><ZoomOutIcon className="w-6 h-6" /></button>
                                         <button onClick={() => resetTransform()} className="p-2 text-white hover:bg-white/20 rounded-md transition-colors" aria-label="Reset Zoom"><ResetZoomIcon className="w-6 h-6" /></button>
                                     </div>
 
-                                    <TransformComponent wrapperClass="!w-screen !h-screen" contentClass="flex items-center justify-center">
+                                    <TransformComponent>
                                         <img
                                             src={finalImageUrl!}
                                             alt="Final Advertisement - Zoomed"
                                             className="max-w-[95vw] max-h-[95vh] rounded-lg shadow-2xl"
+                                            onLoad={() => centerView()}
                                         />
                                     </TransformComponent>
                                 </>

@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 
-import type { AnalysisResult, Scene, AdSize, UploadedImage, AdText } from './types';
+import type { AnalysisResult, Scene, AdSize, UploadedImage, AdText, AdTemplate } from './types';
 
 // Components for each step
 import ImageUploadStep from './components/ImageUploadStep';
@@ -23,6 +24,7 @@ const App: React.FC = () => {
   const [selectedSize, setSelectedSize] = useState<AdSize | null>(null);
   const [adText, setAdText] = useState<AdText | null>(null);
   const [customPrompt, setCustomPrompt] = useState<string>('');
+  const [selectedTemplate, setSelectedTemplate] = useState<AdTemplate | null>(null);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
@@ -53,6 +55,19 @@ const App: React.FC = () => {
 
   const handleSceneSelect = (scene: Scene) => {
     setSelectedScene(scene);
+    setSelectedTemplate(null); // Clear template if a custom scene is selected
+    setStep(3);
+  };
+
+  const handleTemplateSelect = (template: AdTemplate) => {
+    setSelectedTemplate(template);
+    // FIX: Property 'category' was missing when creating a Scene object from a template.
+    const sceneFromTemplate: Scene = {
+      description: template.sceneDescription,
+      imageUrl: template.previewImageUrl,
+      category: template.category,
+    };
+    setSelectedScene(sceneFromTemplate);
     setStep(3);
   };
 
@@ -89,6 +104,7 @@ const App: React.FC = () => {
     setSelectedSize(null);
     setAdText(null);
     setCustomPrompt('');
+    setSelectedTemplate(null);
   };
 
   const renderStep = () => {
@@ -103,6 +119,7 @@ const App: React.FC = () => {
             uploadedImage={uploadedImage}
             onBack={handleBack}
             onSceneSelect={handleSceneSelect}
+            onTemplateSelect={handleTemplateSelect}
           />
         );
       case 3:
@@ -121,6 +138,7 @@ const App: React.FC = () => {
                 sceneDescription={selectedScene.description}
                 onBack={handleBack}
                 onAdTextSubmit={handleAdTextSubmit}
+                initialFontStyle={selectedTemplate?.fontStyle}
             />
          );
       case 5:
@@ -128,6 +146,7 @@ const App: React.FC = () => {
             <CustomPromptStep
                 onBack={handleBack}
                 onCustomPromptSubmit={handleCustomPromptSubmit}
+                initialPrompt={selectedTemplate?.textPromptInstruction}
             />
         );
       case 6: // Confirm & Generate
