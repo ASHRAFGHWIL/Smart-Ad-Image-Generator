@@ -205,7 +205,7 @@ export const generateFinalAdImage = async (
     Task: Create a final advertisement image with dimensions ${adSize} pixels.
     1. First, generate a background scene described as: "${sceneDescription}".
     2. Then, seamlessly place the provided product image into that scene. It's critical to match the product's original lighting and shadows to make it look completely natural in its new environment.
-    3. Finally, add the following advertising text onto the image. Headline: "${adText.headline}". Body: "${adText.body}". The text should be placed in a visually appealing location, using a stylish and readable font with a "${adText.fontStyle}" style. IMPORTANT: All text (headline, body, and catchphrase) MUST be rendered in ALL CAPS and BOLD.
+    3. Finally, add the following advertising text onto the image. Headline: "${adText.headline}". Body: "${adText.body}". The text should be placed in a visually appealing location, using a stylish and readable font with a "${adText.fontStyle}" style. IMPORTANT: All text (headline, body, and catchphrase) MUST be rendered in ALL CAPS and BOLD. Additionally, apply a subtle but professional-looking stroke (outline) to all text. The stroke color should be chosen carefully to contrast beautifully with both the text color and the background, ensuring maximum readability and visual pop.
     ${adText.catchphrase ? `4. Also, prominently feature this SEO catchphrase: "${adText.catchphrase}".` : ''}
     ${customPrompt ? `5. Apply this final user instruction: "${customPrompt}"` : ''}
     
@@ -249,7 +249,7 @@ export const addTextToImage = async (
        - Body: "${adText.body}"
        ${adText.catchphrase ? `- SEO Catchphrase: "${adText.catchphrase}" (make this prominent)` : ''}
     3. The text should be placed in a visually appealing location.
-    4. Use a stylish and readable font with a "${adText.fontStyle}" style. IMPORTANT: All text (headline, body, and catchphrase) MUST be rendered in ALL CAPS and BOLD.
+    4. Use a stylish and readable font with a "${adText.fontStyle}" style. IMPORTANT: All text (headline, body, and catchphrase) MUST be rendered in ALL CAPS and BOLD. Additionally, apply a subtle but professional-looking stroke (outline) to all text. The stroke color should be chosen carefully to contrast beautifully with both the text color and the background, ensuring maximum readability and visual pop.
     ${customPrompt ? `5. Apply this final user instruction for text placement and style: "${customPrompt}"` : ''}
     
     The final output must be a single image with the text added. The image dimensions must remain the same as the original.
