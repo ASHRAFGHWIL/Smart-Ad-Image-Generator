@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 
 import type { AnalysisResult, Scene, AdSize, UploadedImage, AdText } from '../types';
 import { generateFinalAdImage } from '../services/geminiService';
@@ -6,6 +7,10 @@ import Spinner from './Spinner';
 import { DownloadIcon } from './icons/DownloadIcon';
 import { RedoIcon } from './icons/RedoIcon';
 import { ShareIcon } from './icons/ShareIcon';
+import { ZoomIcon } from './icons/ZoomIcon';
+import { ZoomOutIcon } from './icons/ZoomOutIcon';
+import { ResetZoomIcon } from './icons/ResetZoomIcon';
+
 
 interface FinalImageStepProps {
     isGenerating: boolean;
@@ -41,6 +46,7 @@ const FinalImageStep: React.FC<FinalImageStepProps> = ({
     const [finalImageUrl, setFinalImageUrl] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [isZoomed, setIsZoomed] = useState<boolean>(false);
 
     useEffect(() => {
         if (isGenerating && !finalImageUrl && !isLoading && !error) {
@@ -128,13 +134,23 @@ const FinalImageStep: React.FC<FinalImageStepProps> = ({
                 <h2 className="text-3xl font-bold text-[#1A1A1A] dark:text-gray-100 font-poppins mb-4">
                     إعلانك جاهز!
                 </h2>
-                <div className="relative group max-w-lg mx-auto mb-6">
+                <div 
+                    className="relative group max-w-lg mx-auto mb-6 cursor-zoom-in"
+                    onClick={() => setIsZoomed(true)}
+                >
                     <img src={finalImageUrl} alt="Final Advertisement" className="rounded-lg shadow-2xl w-full" />
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center">
+                        <ZoomIcon className="w-12 h-12 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
                 </div>
                  <div className="flex justify-center items-center gap-4 flex-wrap">
                     <button onClick={handleDownload} className="flex items-center gap-2 text-white font-cairo font-bold bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 py-3 px-6">
                         <DownloadIcon />
                         تحميل الصورة
+                    </button>
+                    <button onClick={() => setIsZoomed(true)} className="flex items-center gap-2 text-white font-cairo font-bold bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 py-3 px-6">
+                        <ZoomIcon />
+                        تكبير
                     </button>
                     <button onClick={handleShare} className="flex items-center gap-2 text-white font-cairo font-bold bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 py-3 px-6">
                         <ShareIcon />
@@ -145,6 +161,44 @@ const FinalImageStep: React.FC<FinalImageStepProps> = ({
                         إنشاء إعلان جديد
                     </button>
                 </div>
+                {isZoomed && (
+                    <div
+                        className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 animate-fade-in"
+                    >
+                        <button
+                            onClick={() => setIsZoomed(false)}
+                            className="absolute top-4 right-4 text-white text-4xl hover:text-gray-300 transition-colors z-[60]"
+                            aria-label="Close"
+                        >
+                            &times;
+                        </button>
+                        <TransformWrapper
+                            initialScale={1}
+                            minScale={0.5}
+                            maxScale={8}
+                            limitToBounds={true}
+                            doubleClick={{ disabled: true }}
+                        >
+                            {({ zoomIn, zoomOut, resetTransform }) => (
+                                <>
+                                    <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2 p-2 bg-gray-900/50 rounded-lg backdrop-blur-sm">
+                                        <button onClick={() => zoomIn(0.5)} className="p-2 text-white hover:bg-white/20 rounded-md transition-colors" aria-label="Zoom In"><ZoomIcon className="w-6 h-6"/></button>
+                                        <button onClick={() => zoomOut(0.5)} className="p-2 text-white hover:bg-white/20 rounded-md transition-colors" aria-label="Zoom Out"><ZoomOutIcon className="w-6 h-6" /></button>
+                                        <button onClick={() => resetTransform()} className="p-2 text-white hover:bg-white/20 rounded-md transition-colors" aria-label="Reset Zoom"><ResetZoomIcon className="w-6 h-6" /></button>
+                                    </div>
+
+                                    <TransformComponent wrapperClass="!w-screen !h-screen" contentClass="flex items-center justify-center">
+                                        <img
+                                            src={finalImageUrl!}
+                                            alt="Final Advertisement - Zoomed"
+                                            className="max-w-[95vw] max-h-[95vh] rounded-lg shadow-2xl"
+                                        />
+                                    </TransformComponent>
+                                </>
+                            )}
+                        </TransformWrapper>
+                    </div>
+                )}
             </div>
         );
     }

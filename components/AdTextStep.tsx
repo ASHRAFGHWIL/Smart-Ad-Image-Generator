@@ -53,6 +53,9 @@ const AdTextStep: React.FC<AdTextStepProps> = ({ productAnalysis, sceneDescripti
     }
   };
 
+  const selectedFont = fontStyles.find(style => style.key === fontStyle);
+  const fontClassName = selectedFont ? selectedFont.className : 'font-cairo';
+
   return (
     <div className="animate-fade-in">
       <div className="flex justify-between items-center mb-6">
@@ -124,6 +127,18 @@ const AdTextStep: React.FC<AdTextStepProps> = ({ productAnalysis, sceneDescripti
             ))}
           </div>
         </div>
+
+        <div className="mt-8 p-6 bg-gray-100 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
+            <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 text-center">معاينة حية</h4>
+            <div className={`text-center p-4 rounded-md bg-white dark:bg-gray-800 shadow-inner ${fontClassName}`}>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 break-words min-h-[1em]">
+                    {headline || '[العنوان الرئيسي هنا]'}
+                </h3>
+                <p className="mt-2 text-gray-600 dark:text-gray-400 break-words min-h-[3em]">
+                    {body || '[النص الأساسي هنا...]'}
+                </p>
+            </div>
+        </div>
         
         {error && (
             <div className="p-3 bg-red-100 dark:bg-red-900/50 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 rounded-lg text-sm">
@@ -131,7 +146,7 @@ const AdTextStep: React.FC<AdTextStepProps> = ({ productAnalysis, sceneDescripti
             </div>
         )}
 
-        <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex flex-col sm:flex-row gap-4 pt-4">
             <button
                 type="button"
                 onClick={handleGenerateText}

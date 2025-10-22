@@ -18,6 +18,10 @@ const SceneSelectionStep: React.FC<SceneSelectionStepProps> = ({ analysisResult,
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [customSceneDescription, setCustomSceneDescription] = useState('');
+  const [isGeneratingCustom, setIsGeneratingCustom] = useState(false);
+  const [customSceneError, setCustomSceneError] = useState<string | null>(null);
+
   useEffect(() => {
     const generateScenes = async () => {
       setIsLoading(true);
@@ -62,6 +66,27 @@ const SceneSelectionStep: React.FC<SceneSelectionStepProps> = ({ analysisResult,
     generateScenes();
   }, [analysisResult]);
 
+    const handleGenerateCustomScene = async () => {
+      if (!customSceneDescription.trim()) return;
+
+      setIsGeneratingCustom(true);
+      setCustomSceneError(null);
+      try {
+        const imageUrl = await generateSceneImage(customSceneDescription);
+        const newScene: Scene = { description: customSceneDescription, imageUrl };
+        
+        // Add the new scene to the beginning of the list, filtering out any nulls
+        setScenes(prevScenes => [newScene, ...prevScenes.filter(Boolean) as Scene[]]);
+        setCustomSceneDescription(''); // Clear input after successful generation
+      } catch (err) {
+        console.error("Failed to generate custom scene:", err);
+        const errorMessage = err instanceof Error ? err.message : 'فشل إنشاء المشهد المخصص.';
+        setCustomSceneError(errorMessage);
+      } finally {
+        setIsGeneratingCustom(false);
+      }
+    };
+
   return (
     <div className="animate-fade-in">
        <div className="flex justify-between items-center mb-6">
@@ -70,13 +95,36 @@ const SceneSelectionStep: React.FC<SceneSelectionStepProps> = ({ analysisResult,
                     الخطوة الثانية: اختيار المشهد
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400">
-                    اختر أحد المشاهد التي أنشأها الذكاء الاصطناعي كخلفية لمنتجك.
+                    اختر أحد المشاهد التي أنشأها الذكاء الاصطناعي أوصف مشهدك الخاص.
                 </p>
             </div>
             <button onClick={onBack} className="bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 font-bold py-2 px-4 rounded-lg transition-colors duration-300 text-sm">
                 &rarr; العودة
             </button>
         </div>
+
+        <div className="mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+            <h3 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">أوصف مشهدك الخاص</h3>
+            <div className="flex flex-col sm:flex-row gap-2">
+                <textarea
+                value={customSceneDescription}
+                onChange={(e) => setCustomSceneDescription(e.target.value)}
+                placeholder="مثال: شاطئ استوائي عند غروب الشمس مع رمال بيضاء ناعمة وأمواج هادئة"
+                className="flex-grow bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 focus:ring-2 focus:ring-[#007BFF] focus:border-[#007BFF] transition-colors"
+                rows={2}
+                disabled={isGeneratingCustom}
+                />
+                <button
+                onClick={handleGenerateCustomScene}
+                disabled={!customSceneDescription.trim() || isGeneratingCustom}
+                className="w-full sm:w-auto text-white font-cairo font-bold bg-gradient-to-r from-[#007BFF] to-[#8A2BE2] hover:from-[#006ae0] hover:to-[#7925c7] rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 py-2 px-6 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-md flex items-center justify-center"
+                >
+                {isGeneratingCustom ? <Spinner /> : 'إنشاء وإضافة'}
+                </button>
+            </div>
+            {customSceneError && <p className="text-red-500 text-sm mt-2">{customSceneError}</p>}
+        </div>
+
 
       {isLoading && scenes.every(s => s === null) && (
         <div className="flex flex-col items-center justify-center p-8 min-h-[300px]">
@@ -95,7 +143,7 @@ const SceneSelectionStep: React.FC<SceneSelectionStepProps> = ({ analysisResult,
       {!error && (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
           {scenes.map((scene, index) => (
-            <div key={index} className="group relative aspect-w-1 aspect-h-1 flex flex-col">
+            <div key={scene ? scene.imageUrl : index} className="group relative aspect-w-1 aspect-h-1 flex flex-col">
               {scene ? (
                 <>
                   <img
