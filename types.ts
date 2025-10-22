@@ -13,3 +13,9 @@ export interface Scene {
 }
 
 export type AdSize = '1080x1080' | '1080x1920' | '1200x628' | '2000x2000';
+
+// FIX: Define UploadedImage interface here to be shared across the application.
+export interface UploadedImage {
+  data: string; // base64 encoded
+  mimeType: string;
+}

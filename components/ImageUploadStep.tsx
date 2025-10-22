@@ -2,7 +2,8 @@ import React, { useState, useCallback } from 'react';
 
 import { analyzeImageAndExtractColors } from '../services/geminiService';
 import type { AnalysisResult } from '../types';
-import type { UploadedImage } from '../App';
+// FIX: Update import path for UploadedImage to point to the centralized types.ts file.
+import type { UploadedImage } from '../types';
 import ColorPalette from './ColorPalette';
 import Spinner from './Spinner';
 import { UploadIcon } from './icons/UploadIcon';

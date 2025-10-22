@@ -165,13 +165,60 @@ export const generateAdText = async (productAnalysis: string, sceneDescription: 
       throw new Error("The response from the AI was not valid JSON for ad text.");
     }
   };
+
+  const getSmartMarketingDirectives = (productMaterials: string): string => {
+    const materials = productMaterials.toLowerCase();
+    if (materials.includes('wood') || materials.includes('natural') || materials.includes('organic') || materials.includes('plant')) {
+        return `
+- **Product Type**: Wooden/Natural
+- **Lighting Tone**: Apply a warm, golden-amber light cast onto the product.
+- **Background Vibe**: Ensure the overall mood is cozy and natural.
+- **Emotional Goal**: Evoke feelings of trust and warmth.
+- **Visual Adjustments**: Enhance color contrast, cast soft, natural shadow angles, and add a subtle matte sheen to the product's surface.`;
+    }
+    if (materials.includes('metal') || materials.includes('steel') || materials.includes('industrial') || materials.includes('chrome')) {
+        return `
+- **Product Type**: Metallic/Industrial
+- **Lighting Tone**: Apply a cool, silver-blue light to highlight the product.
+- **Background Vibe**: The scene should feel modern and minimalist.
+- **Emotional Goal**: Convey strength and precision.
+- **Visual Adjustments**: Maximize color contrast, create sharp, defined shadow angles, and add a strong gloss and reflection effect to the product.`;
+    }
+    if (materials.includes('fabric') || materials.includes('textile') || materials.includes('handmade') || materials.includes('woven')) {
+         return `
+- **Product Type**: Handmade/Textiles
+- **Lighting Tone**: Use soft, diffused lighting.
+- **Background Vibe**: The scene should be elegant and gentle.
+- **Emotional Goal**: Inspire a sense of intimacy and craftsmanship.
+- **Visual Adjustments**: Use a gentle color contrast, soft shadow angles, and avoid any harsh gloss or reflection.`;
+    }
+    if (materials.includes('electronic') || materials.includes('plastic') || materials.includes('tech') || materials.includes('device')) {
+        return `
+- **Product Type**: Tech/Electronic
+- **Lighting Tone**: Use neutral, balanced studio lighting.
+- **Background Vibe**: The background should be dark and futuristic.
+- **Emotional Goal**: Suggest innovation and focus.
+- **Visual Adjustments**: Use high color contrast (e.g., cyan/white text on dark background), create subtle shadows, and add a slight sheen to plastic/glass surfaces.`;
+    }
+    if (materials.includes('jewelry') || materials.includes('luxury') || materials.includes('gemstone') || materials.includes('gold') || materials.includes('silver')) {
+        return `
+- **Product Type**: Luxury/Jewelry
+- **Lighting Tone**: Apply a bright, sparkling golden light.
+- **Background Vibe**: The background should feel luxurious and glossy.
+- **Emotional Goal**: Create a sense of elegance and desire.
+- **Visual Adjustments**: Use high contrast, add dramatic shadows, and apply a strong sparkle and reflection effect to the product.`;
+    }
+    return `
+- **Product Type**: General
+- **Instructions**: Analyze the product and apply the most fitting lighting, shadows, and effects to create a professional and appealing advertisement.`;
+};
   
   export const generateFinalImage = async (
     productImage: UploadedImage,
     scene: Scene,
     adText: { headline: string; body: string },
     adSize: AdSize,
-    colorPalette: string[]
+    analysisResult: AnalysisResult,
   ): Promise<string> => {
     // Fetch the scene image data as base64
     const sceneResponse = await fetch(scene.imageUrl);
@@ -200,22 +247,36 @@ export const generateAdText = async (productAnalysis: string, sceneDescription: 
   
     const [width, height] = adSize.split('x').map(Number);
     const isVertical = height > width;
+    
+    const marketingDirectives = getSmartMarketingDirectives(analysisResult.analysis.materials);
+    const colorPalette = analysisResult.colors;
   
     const prompt = `
-      Create a final, polished product advertisement image.
-      1.  First, accurately remove the background from the provided product image, making it transparent. Preserve all details of the product.
-      2.  Use the provided scene image as the new background.
-      3.  Seamlessly composite the background-removed product image onto the scene. The product should be the clear focus, realistically lit and scaled.
-      4.  Add the following ad text onto the image:
+      Create a final, polished product advertisement image by following these steps precisely.
+      
+      **Step 1: Product Preparation**
+      Accurately remove the background from the provided product image, making it transparent. Preserve all details, edges, and textures of the product.
+      
+      **Step 2: Scene Composition**
+      Use the provided scene image as the new background. Seamlessly composite the background-removed product onto the scene. The product must be the clear focus, realistically scaled and placed within the environment.
+      
+      **Step 3: Smart Marketing Engine Application**
+      Apply the following intelligent marketing adjustments to the composite. These are critical for the final look and feel.
+      ${marketingDirectives}
+      
+      **Step 4: Text Integration**
+      Add the following ad text onto the image:
           - Headline: "${adText.headline}"
           - Body: "${adText.body}"
-      5.  Use the provided color palette for the text colors. Choose colors that have high contrast against the background.
-      6.  The text should be stylishly and professionally placed. The headline should be larger than the body text.
-      7.  The final image dimensions must be exactly ${width}x${height} pixels.
-      8.  Do not add any other logos, watermarks, or text. The final output must be just the composite image.
+      The text should be stylishly and professionally placed. The headline must be larger than the body text. Use the provided color palette for the text, choosing colors that have high contrast against their immediate background for maximum readability.
       
-      Color Palette for text: ${colorPalette.join(', ')}
-      Layout hint: For ${isVertical ? 'vertical' : 'horizontal'} layouts, consider placing text at the ${isVertical ? 'top or bottom' : 'side'}.
+      **Step 5: Final Output Specifications**
+      - The final image dimensions must be exactly ${width}x${height} pixels.
+      - Do not add any other logos, watermarks, or text.
+      - The final output must be a single, photorealistic, high-quality composite image.
+      
+      **Color Palette for text**: ${colorPalette.join(', ')}
+      **Layout hint**: For ${isVertical ? 'vertical' : 'horizontal'} layouts, consider placing text at the ${isVertical ? 'top or bottom' : 'side'}.
     `;
   
     const response = await ai.models.generateContent({

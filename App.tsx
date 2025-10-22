@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 
-import type { AnalysisResult, Scene, AdSize } from './types';
+// FIX: Import UploadedImage from the central types file.
+import type { AnalysisResult, Scene, AdSize, UploadedImage } from './types';
 
 // Components for each step
 import ImageUploadStep from './components/ImageUploadStep';
@@ -8,11 +9,6 @@ import SceneSelectionStep from './components/SceneSelectionStep';
 import SizeSelectionStep from './components/SizeSelectionStep';
 import AdTextStep from './components/AdTextStep';
 import FinalImageStep from './components/FinalImageStep';
-
-export interface UploadedImage {
-  data: string; // base64 encoded
-  mimeType: string;
-}
 
 const App: React.FC = () => {
   const [step, setStep] = useState<number>(1);
@@ -100,7 +96,7 @@ const App: React.FC = () => {
                 scene={selectedScene}
                 adSize={selectedSize}
                 adText={adText}
-                colorPalette={analysisResult.colors}
+                analysisResult={analysisResult}
                 onRestart={handleRestart}
             />
         );
