@@ -21,6 +21,9 @@ const fontStyles = [
   { key: 'Serif', label: 'كلاسيكي', className: 'font-merriweather' },
   { key: 'Handwritten', label: 'يدوي', className: 'font-caveat' },
   { key: 'Slab', label: 'كتلي', className: 'font-roboto-slab' },
+  { key: 'Gothic', label: 'قوطي', className: 'font-uncial' },
+  { key: 'Brush', label: 'فرشاة', className: 'font-dancing-script' },
+  { key: 'Stencil', label: 'ستنسل', className: 'font-staatliches' },
 ];
 
 const countWords = (str: string) => {
@@ -140,13 +143,13 @@ const AdTextStep: React.FC<AdTextStepProps> = ({ productAnalysis, sceneDescripti
                 key={style.key}
                 type="button"
                 onClick={() => setFontStyle(style.key)}
-                className={`px-4 py-2 rounded-lg transition-all duration-200 border-2 w-32 h-16 flex items-center justify-center text-xl ${style.className} ${
+                className={`px-4 py-2 rounded-lg transition-all duration-200 border-2 w-32 h-16 flex items-center justify-center text-xl ${
                   fontStyle === style.key 
                     ? 'bg-gradient-to-r from-[#007BFF] to-[#8A2BE2] text-white border-transparent shadow-md scale-105' 
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-600 hover:border-[#007BFF] hover:text-[#007BFF] dark:hover:border-[#007BFF] dark:hover:text-[#007BFF]'
                 }`}
               >
-                {style.label}
+                <span className={style.className}>{style.label}</span>
               </button>
             ))}
           </div>

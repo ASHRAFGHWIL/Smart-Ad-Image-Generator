@@ -35,6 +35,9 @@ const fontStylesForTemplates = [
   { key: 'Serif', label: 'كلاسيكي' },
   { key: 'Handwritten', label: 'يدوي' },
   { key: 'Slab', label: 'كتلي' },
+  { key: 'Gothic', label: 'قوطي' },
+  { key: 'Brush', label: 'فرشاة' },
+  { key: 'Stencil', label: 'ستنسل' },
 ];
 
 
