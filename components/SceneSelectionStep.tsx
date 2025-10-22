@@ -24,6 +24,20 @@ const categories: { [key: string]: string } = {
   Cozy: 'دافئ',
 };
 
+// Add font styles here for template display
+const fontStylesForTemplates = [
+  { key: 'Modern', label: 'حديث' },
+  { key: 'Elegant', label: 'أنيق' },
+  { key: 'Bold', label: 'عريض' },
+  { key: 'Impactful', label: 'بارز' },
+  { key: 'Playful', label: 'مرح' },
+  { key: 'Cursive', label: 'مخطوطة' },
+  { key: 'Serif', label: 'كلاسيكي' },
+  { key: 'Handwritten', label: 'يدوي' },
+  { key: 'Slab', label: 'كتلي' },
+];
+
+
 const SceneSelectionStep: React.FC<SceneSelectionStepProps> = ({ analysisResult, onBack, onSceneSelect, onTemplateSelect }) => {
   const [scenes, setScenes] = useState<(Scene | null)[]>(Array(10).fill(null));
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -242,21 +256,34 @@ const SceneSelectionStep: React.FC<SceneSelectionStepProps> = ({ analysisResult,
 
             {activeTab === 'templates' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {adTemplates.map(template => (
-                        <div key={template.id} className="group flex flex-col bg-white dark:bg-gray-800/50 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 border border-gray-200 dark:border-gray-700 overflow-hidden">
-                            <img src={template.previewImageUrl} alt={template.name} className="h-48 w-full object-cover" />
-                            <div className="p-4 flex flex-col flex-grow">
-                                <h3 className="text-xl font-bold font-poppins text-gray-900 dark:text-gray-100">{template.name}</h3>
-                                <p className="mt-1 text-gray-600 dark:text-gray-400 text-sm flex-grow">{template.description}</p>
-                                <button
-                                    onClick={() => onTemplateSelect(template)}
-                                    className="w-full mt-4 text-white font-cairo font-bold bg-gradient-to-r from-[#007BFF] to-[#8A2BE2] hover:from-[#006ae0] hover:to-[#7925c7] rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform group-hover:-translate-y-0.5 py-2 px-4"
-                                >
-                                    اختيار هذا القالب
-                                </button>
+                    {adTemplates.map(template => {
+                        const templateCategory = categories[template.category] || template.category;
+                        const templateFont = fontStylesForTemplates.find(f => f.key === template.fontStyle)?.label || template.fontStyle;
+                        
+                        return (
+                            <div key={template.id} className="group flex flex-col bg-white dark:bg-gray-800/50 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 border border-gray-200 dark:border-gray-700 overflow-hidden">
+                                <img src={template.previewImageUrl} alt={template.name} className="h-48 w-full object-cover" />
+                                <div className="p-4 flex flex-col flex-grow">
+                                    <h3 className="text-xl font-bold font-poppins text-gray-900 dark:text-gray-100">{template.name}</h3>
+                                    <div className="flex flex-wrap gap-2 my-2">
+                                        <span className="text-xs font-semibold inline-block py-1 px-2.5 leading-none text-center whitespace-nowrap align-baseline rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                                            النمط: {templateCategory}
+                                        </span>
+                                        <span className="text-xs font-semibold inline-block py-1 px-2.5 leading-none text-center whitespace-nowrap align-baseline rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">
+                                            الخط: {templateFont}
+                                        </span>
+                                    </div>
+                                    <p className="text-gray-600 dark:text-gray-400 text-sm flex-grow">{template.description}</p>
+                                    <button
+                                        onClick={() => onTemplateSelect(template)}
+                                        className="w-full mt-4 text-white font-cairo font-bold bg-gradient-to-r from-[#007BFF] to-[#8A2BE2] hover:from-[#006ae0] hover:to-[#7925c7] rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform group-hover:-translate-y-0.5 py-2 px-4"
+                                    >
+                                        اختيار هذا القالب
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
         </div>

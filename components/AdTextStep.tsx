@@ -18,6 +18,9 @@ const fontStyles = [
   { key: 'Impactful', label: 'بارز', className: 'font-bebas-neue' },
   { key: 'Playful', label: 'مرح', className: 'font-pacifico' },
   { key: 'Cursive', label: 'مخطوطة', className: 'font-lobster' },
+  { key: 'Serif', label: 'كلاسيكي', className: 'font-merriweather' },
+  { key: 'Handwritten', label: 'يدوي', className: 'font-caveat' },
+  { key: 'Slab', label: 'كتلي', className: 'font-roboto-slab' },
 ];
 
 const countWords = (str: string) => {
