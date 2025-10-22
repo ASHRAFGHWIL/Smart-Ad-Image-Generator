@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 
 import type { AnalysisResult, Scene, AdSize, UploadedImage, AdText } from '../types';
-import { generateFinalAdImage } from '../services/geminiService';
+import { generateFinalAdImage, addTextToImage } from '../services/geminiService';
 import Spinner from './Spinner';
 import { DownloadIcon } from './icons/DownloadIcon';
 import { RedoIcon } from './icons/RedoIcon';
@@ -14,7 +14,8 @@ import { ResetZoomIcon } from './icons/ResetZoomIcon';
 
 interface FinalImageStepProps {
     isGenerating: boolean;
-    uploadedImage: UploadedImage;
+    uploadedImage: UploadedImage | null;
+    preDesignedAdImage: UploadedImage | null;
     scene: Scene;
     adSize: AdSize;
     adText: AdText;
@@ -37,6 +38,7 @@ const fontStyles = [
 const FinalImageStep: React.FC<FinalImageStepProps> = ({
     isGenerating,
     uploadedImage,
+    preDesignedAdImage,
     scene,
     adSize,
     adText,
@@ -56,13 +58,24 @@ const FinalImageStep: React.FC<FinalImageStepProps> = ({
                 setIsLoading(true);
                 setError(null);
                 try {
-                    const imageUrl = await generateFinalAdImage(
-                        uploadedImage,
-                        scene.description,
-                        adSize,
-                        adText,
-                        customPrompt
-                    );
+                    let imageUrl;
+                    if (preDesignedAdImage) {
+                         imageUrl = await addTextToImage(
+                            preDesignedAdImage,
+                            adText,
+                            customPrompt
+                        );
+                    } else if (uploadedImage) {
+                         imageUrl = await generateFinalAdImage(
+                            uploadedImage,
+                            scene.description,
+                            adSize,
+                            adText,
+                            customPrompt
+                        );
+                    } else {
+                        throw new Error("No source image provided for generation.");
+                    }
                     setFinalImageUrl(imageUrl);
                 } catch (err) {
                     console.error(err);
@@ -73,7 +86,7 @@ const FinalImageStep: React.FC<FinalImageStepProps> = ({
             };
             generateImage();
         }
-    }, [isGenerating, uploadedImage, scene, adSize, adText, customPrompt, finalImageUrl, isLoading, error]);
+    }, [isGenerating, uploadedImage, preDesignedAdImage, scene, adSize, adText, customPrompt, finalImageUrl, isLoading, error]);
 
     const handleDownload = () => {
         if (!finalImageUrl) return;
@@ -217,7 +230,7 @@ const FinalImageStep: React.FC<FinalImageStepProps> = ({
             <div className="flex justify-between items-center mb-6">
                 <div>
                     <h2 className="text-2xl font-bold text-[#1A1A1A] dark:text-gray-100 font-poppins">
-                        الخطوة السادسة: المراجعة النهائية والإنشاء
+                        الخطوة النهائية: المراجعة والإنشاء
                     </h2>
                     <p className="text-gray-600 dark:text-gray-400">
                         تأكد من جميع اختياراتك قبل إنشاء الصورة النهائية.
@@ -232,9 +245,16 @@ const FinalImageStep: React.FC<FinalImageStepProps> = ({
                 <div>
                     <h3 className="text-xl font-semibold mb-4 border-b dark:border-gray-600 pb-2">ملخص اختياراتك:</h3>
                     <ul className="space-y-3 text-gray-700 dark:text-gray-300">
-                        <li><strong>صورة المنتج:</strong> <img src={`data:${uploadedImage.mimeType};base64,${uploadedImage.data}`} alt="Uploaded Product" className="w-16 h-16 object-cover rounded-md inline-block ml-2"/> تم الرفع</li>
-                        <li><strong>المشهد المختار:</strong> {scene.description}</li>
-                        <li><strong>حجم الإعلان:</strong> {adSize}</li>
+                        {preDesignedAdImage ? (
+                            <li><strong>صورة الخلفية:</strong> <img src={`data:${preDesignedAdImage.mimeType};base64,${preDesignedAdImage.data}`} alt="Pre-designed Ad" className="w-16 h-16 object-cover rounded-md inline-block ml-2"/> تم الرفع</li>
+                        ) : (
+                            <>
+                                {uploadedImage && <li><strong>صورة المنتج:</strong> <img src={`data:${uploadedImage.mimeType};base64,${uploadedImage.data}`} alt="Uploaded Product" className="w-16 h-16 object-cover rounded-md inline-block ml-2"/> تم الرفع</li>}
+                                <li><strong>المشهد المختار:</strong> {scene.description}</li>
+                                <li><strong>حجم الإعلان:</strong> {adSize}</li>
+                            </>
+                        )}
+                        {adText.catchphrase && <li><strong>الجملة الترويجية:</strong> {adText.catchphrase}</li>}
                         <li><strong>العنوان:</strong> {adText.headline}</li>
                         <li><strong>النص الأساسي:</strong> {adText.body}</li>
                         <li><strong>نمط الخط:</strong> {selectedStyleLabel}</li>

@@ -25,6 +25,7 @@ export interface AdText {
   headline: string;
   body: string;
   fontStyle: string;
+  catchphrase?: string;
 }
 
 export interface AdTemplate {

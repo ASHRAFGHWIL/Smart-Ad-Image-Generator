@@ -153,14 +153,17 @@ export const generateSceneImage = async (description: string): Promise<string> =
 export const generateAdText = async (
   productAnalysis: string,
   sceneDescription: string
-): Promise<{ headline: string; body:string }> => {
+): Promise<{ headline: string; body:string; catchphrase: string; }> => {
   const model = "gemini-2.5-flash";
-  const prompt = `Create a compelling ad copy for a product with the following analysis, placed in the described scene. Generate a short, catchy headline (max 50 characters) and a slightly longer body text (max 150 characters) that highlights the product's best features.
+  const prompt = `Create a compelling ad copy for a product with the following analysis, placed in the described scene. Generate:
+  1. A short, catchy headline (max 50 characters).
+  2. A slightly longer body text (max 150 characters) that highlights the product's best features.
+  3. A short, SEO-friendly catchphrase (max 60 characters) to be used as a prominent title.
   
   Product Analysis: ${productAnalysis}
   Scene: ${sceneDescription}
   
-  Return a JSON object with this structure: { "headline": "...", "body": "..." }`;
+  Return a JSON object with this structure: { "headline": "...", "body": "...", "catchphrase": "..." }`;
   
   const response = await ai.models.generateContent({
     model,
@@ -172,8 +175,9 @@ export const generateAdText = async (
             properties: {
                 headline: { type: Type.STRING },
                 body: { type: Type.STRING },
+                catchphrase: { type: Type.STRING },
             },
-            required: ["headline", "body"],
+            required: ["headline", "body", "catchphrase"],
         },
     },
   });
@@ -201,8 +205,9 @@ export const generateFinalAdImage = async (
     Task: Create a final advertisement image with dimensions ${adSize} pixels.
     1. First, generate a background scene described as: "${sceneDescription}".
     2. Then, seamlessly place the provided product image into that scene. It's critical to match the product's original lighting and shadows to make it look completely natural in its new environment.
-    3. Finally, add the following advertising text onto the image. Headline: "${adText.headline}". Body: "${adText.body}". The text should be placed in a visually appealing location, using a stylish and readable font with a "${adText.fontStyle}" style.
-    ${customPrompt ? `4. Apply this final user instruction: "${customPrompt}"` : ''}
+    3. Finally, add the following advertising text onto the image. Headline: "${adText.headline}". Body: "${adText.body}". The text should be placed in a visually appealing location, using a stylish and readable font with a "${adText.fontStyle}" style. IMPORTANT: All text (headline, body, and catchphrase) MUST be rendered in ALL CAPS and BOLD.
+    ${adText.catchphrase ? `4. Also, prominently feature this SEO catchphrase: "${adText.catchphrase}".` : ''}
+    ${customPrompt ? `5. Apply this final user instruction: "${customPrompt}"` : ''}
     
     The final output must be a single, complete advertisement image that combines all these elements, adhering strictly to the ${adSize} dimensions.
     `;
@@ -228,4 +233,47 @@ export const generateFinalAdImage = async (
     }
 
     throw new Error('Final image generation failed.');
+};
+
+export const addTextToImage = async (
+    backgroundImage: UploadedImage,
+    adText: AdText,
+    customPrompt: string
+): Promise<string> => {
+    const model = 'gemini-2.5-flash-image';
+    const prompt = `
+    Task: Add advertising text to the provided image.
+    1. Use the provided image as the background. Do not change the background.
+    2. Add the following text onto the image:
+       - Headline: "${adText.headline}"
+       - Body: "${adText.body}"
+       ${adText.catchphrase ? `- SEO Catchphrase: "${adText.catchphrase}" (make this prominent)` : ''}
+    3. The text should be placed in a visually appealing location.
+    4. Use a stylish and readable font with a "${adText.fontStyle}" style. IMPORTANT: All text (headline, body, and catchphrase) MUST be rendered in ALL CAPS and BOLD.
+    ${customPrompt ? `5. Apply this final user instruction for text placement and style: "${customPrompt}"` : ''}
+    
+    The final output must be a single image with the text added. The image dimensions must remain the same as the original.
+    `;
+
+    const response = await ai.models.generateContent({
+        model,
+        contents: {
+            parts: [
+                { inlineData: { data: backgroundImage.data, mimeType: backgroundImage.mimeType } },
+                { text: prompt },
+            ],
+        },
+        config: {
+            responseModalities: [Modality.IMAGE],
+        },
+    });
+
+    for (const part of response.candidates[0].content.parts) {
+        if (part.inlineData) {
+            const base64ImageBytes: string = part.inlineData.data;
+            return `data:image/png;base64,${base64ImageBytes}`;
+        }
+    }
+
+    throw new Error('Failed to add text to the image.');
 };

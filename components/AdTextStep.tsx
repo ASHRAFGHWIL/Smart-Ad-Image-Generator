@@ -41,6 +41,7 @@ const countWords = (str: string) => {
 const AdTextStep: React.FC<AdTextStepProps> = ({ productAnalysis, sceneDescription, onBack, onAdTextSubmit, initialFontStyle }) => {
   const [headline, setHeadline] = useState('');
   const [body, setBody] = useState('');
+  const [catchphrase, setCatchphrase] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fontStyle, setFontStyle] = useState(initialFontStyle || 'Modern');
@@ -55,9 +56,10 @@ const AdTextStep: React.FC<AdTextStepProps> = ({ productAnalysis, sceneDescripti
     setIsLoading(true);
     setError(null);
     try {
-      const { headline: generatedHeadline, body: generatedBody } = await generateAdText(productAnalysis, sceneDescription);
+      const { headline: generatedHeadline, body: generatedBody, catchphrase: generatedCatchphrase } = await generateAdText(productAnalysis, sceneDescription);
       setHeadline(generatedHeadline);
       setBody(generatedBody);
+      setCatchphrase(generatedCatchphrase);
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : 'فشل إنشاء النص.');
@@ -69,7 +71,7 @@ const AdTextStep: React.FC<AdTextStepProps> = ({ productAnalysis, sceneDescripti
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (headline && body) {
-      onAdTextSubmit({ headline, body, fontStyle });
+      onAdTextSubmit({ headline, body, fontStyle, catchphrase });
     }
   };
 
@@ -93,6 +95,22 @@ const AdTextStep: React.FC<AdTextStepProps> = ({ productAnalysis, sceneDescripti
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label htmlFor="catchphrase" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">الجملة الترويجية (للسيو)</label>
+          <input
+            type="text"
+            id="catchphrase"
+            value={catchphrase}
+            onChange={(e) => setCatchphrase(e.target.value)}
+            className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-gray-900 dark:text-gray-100 dark:placeholder-gray-400 focus:ring-2 focus:ring-[#007BFF] focus:border-[#007BFF]"
+            placeholder="مثال: أفضل منتج للعناية بالبشرة"
+            maxLength={60}
+          />
+           <div className="flex justify-end text-xs text-gray-500 dark:text-gray-400 gap-x-4 mt-1 px-1">
+            <span>{countWords(catchphrase)} كلمة</span>
+            <span>{catchphrase.length}/60 حرف</span>
+          </div>
+        </div>
         <div>
           <label htmlFor="headline" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">العنوان الرئيسي</label>
           <input
@@ -131,6 +149,9 @@ const AdTextStep: React.FC<AdTextStepProps> = ({ productAnalysis, sceneDescripti
         <div>
             <h4 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">معاينة حية</h4>
             <div className={`text-center p-6 rounded-lg bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 shadow-inner ${fontClassName}`}>
+                 <p className="text-lg text-gray-500 dark:text-gray-400 mb-2 break-words min-h-[1.2em]">
+                    {catchphrase || '[الجملة الترويجية هنا]'}
+                </p>
                 <h3 className="text-3xl font-bold text-gray-900 dark:text-gray-100 break-words min-h-[1.2em]">
                     {headline || '[العنوان الرئيسي هنا]'}
                 </h3>

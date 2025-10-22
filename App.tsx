@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 
 import type { AnalysisResult, Scene, AdSize, UploadedImage, AdText, AdTemplate } from './types';
@@ -19,6 +18,7 @@ const App: React.FC = () => {
 
   // Data collected through the steps
   const [uploadedImage, setUploadedImage] = useState<UploadedImage | null>(null);
+  const [preDesignedAdImage, setPreDesignedAdImage] = useState<UploadedImage | null>(null);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [selectedScene, setSelectedScene] = useState<Scene | null>(null);
   const [selectedSize, setSelectedSize] = useState<AdSize | null>(null);
@@ -50,8 +50,34 @@ const App: React.FC = () => {
   const handleAnalysisComplete = (result: AnalysisResult, image: UploadedImage) => {
     setAnalysisResult(result);
     setUploadedImage(image);
+    setPreDesignedAdImage(null); // Ensure workflows are mutually exclusive
     setStep(2);
   };
+  
+  const handlePreDesignedAdUpload = (image: UploadedImage) => {
+    setPreDesignedAdImage(image);
+    setUploadedImage(null); // Ensure workflows are mutually exclusive
+    
+    // Create dummy data to satisfy downstream components that were designed for the product flow
+    const dummyAnalysis: AnalysisResult = {
+        colors: [],
+        analysis: { materials: 'صورة إعلان مخصصة', lighting: 'متنوع', shadows: 'متنوع' }
+    };
+    const dummyScene: Scene = {
+        description: 'خلفية مخصصة مقدمة من المستخدم',
+        imageUrl: '', 
+        category: 'مخصص'
+    };
+
+    setAnalysisResult(dummyAnalysis);
+    setSelectedScene(dummyScene);
+    setSelectedTemplate(null);
+    // Size is inherent to the uploaded image, so we skip this step.
+    // The final generation prompt will use the pre-designed image as is.
+    setSelectedSize('1080x1080'); // Set a default, it won't be shown to the user.
+    setStep(4); // Jump directly to Ad Text step
+  };
+
 
   const handleSceneSelect = (scene: Scene) => {
     setSelectedScene(scene);
@@ -92,7 +118,11 @@ const App: React.FC = () => {
 
   const handleBack = () => {
     if (step > 1) {
-      setStep(step - 1);
+       if (preDesignedAdImage && step === 4) {
+        setStep(1); // Go back to upload from ad text step in the new flow
+      } else {
+        setStep(step - 1);
+      }
     }
   };
 
@@ -105,13 +135,27 @@ const App: React.FC = () => {
     setAdText(null);
     setCustomPrompt('');
     setSelectedTemplate(null);
+    setPreDesignedAdImage(null);
   };
+
+  const isPreDesignedFlow = preDesignedAdImage !== null;
+  const totalSteps = isPreDesignedFlow ? 5 : 7;
+
+  let displayStep = step;
+  if (isPreDesignedFlow) {
+      if (step === 1) displayStep = 1;
+      if (step === 4) displayStep = 2;
+      if (step === 5) displayStep = 3;
+      if (step === 6) displayStep = 4;
+      if (step === 7) displayStep = 5;
+  }
 
   const renderStep = () => {
     switch (step) {
       case 1:
-        return <ImageUploadStep onAnalysisComplete={handleAnalysisComplete} />;
+        return <ImageUploadStep onAnalysisComplete={handleAnalysisComplete} onPreDesignedAdUpload={handlePreDesignedAdUpload} />;
       case 2:
+        if (isPreDesignedFlow) return null; // Skip for pre-designed flow
         if (!analysisResult || !uploadedImage) return null;
         return (
           <SceneSelectionStep
@@ -123,6 +167,7 @@ const App: React.FC = () => {
           />
         );
       case 3:
+        if (isPreDesignedFlow) return null; // Skip for pre-designed flow
         if (!selectedScene) return null;
         return (
           <SizeSelectionStep
@@ -151,11 +196,12 @@ const App: React.FC = () => {
         );
       case 6: // Confirm & Generate
       case 7: // View Result
-        if (!uploadedImage || !selectedScene || !selectedSize || !adText || !analysisResult) return null;
+        if ((!uploadedImage && !preDesignedAdImage) || !selectedScene || !selectedSize || !adText || !analysisResult) return null;
         return (
             <FinalImageStep
                 isGenerating={step === 7}
                 uploadedImage={uploadedImage}
+                preDesignedAdImage={preDesignedAdImage}
                 scene={selectedScene}
                 adSize={selectedSize}
                 adText={adText}
@@ -167,7 +213,7 @@ const App: React.FC = () => {
             />
         );
       default:
-        return <ImageUploadStep onAnalysisComplete={handleAnalysisComplete} />;
+        return <ImageUploadStep onAnalysisComplete={handleAnalysisComplete} onPreDesignedAdUpload={handlePreDesignedAdUpload} />;
     }
   };
 
@@ -183,7 +229,7 @@ const App: React.FC = () => {
         <ThemeSwitcher theme={theme} toggleTheme={toggleTheme} />
       </header>
       <main className="w-full max-w-5xl bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 sm:p-10 border border-gray-200 dark:border-gray-700">
-        <ProgressBar currentStep={step} totalSteps={7} />
+        <ProgressBar currentStep={displayStep} totalSteps={totalSteps} />
         {renderStep()}
       </main>
       <footer className="text-center mt-8 text-gray-500 dark:text-gray-400 text-sm">

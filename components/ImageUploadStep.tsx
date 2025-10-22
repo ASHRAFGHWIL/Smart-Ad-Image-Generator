@@ -16,9 +16,10 @@ const fileToBase64 = (file: File): Promise<string> =>
 
 interface ImageUploadStepProps {
     onAnalysisComplete: (result: AnalysisResult, image: UploadedImage) => void;
+    onPreDesignedAdUpload: (image: UploadedImage) => void;
 }
 
-const ImageUploadStep: React.FC<ImageUploadStepProps> = ({ onAnalysisComplete }) => {
+const ImageUploadStep: React.FC<ImageUploadStepProps> = ({ onAnalysisComplete, onPreDesignedAdUpload }) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -65,44 +66,102 @@ const ImageUploadStep: React.FC<ImageUploadStepProps> = ({ onAnalysisComplete })
       event.target.value = '';
     }
   }, [imageUrl, onAnalysisComplete]);
+  
+  const handlePreDesignedFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsLoading(true);
+    setError(null);
+    setAnalysisResult(null);
+    if (imageUrl) {
+        URL.revokeObjectURL(imageUrl);
+    }
+    setImageUrl(null);
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setError('يرجى رفع ملف بصيغة JPG, PNG أو WEBP فقط.');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const base64Data = await fileToBase64(file);
+      onPreDesignedAdUpload({ data: base64Data, mimeType: file.type });
+    } catch (err) {
+      console.error(err);
+      const errorMessage = err instanceof Error ? err.message : 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.';
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+      event.target.value = '';
+    }
+  }, [imageUrl, onPreDesignedAdUpload]);
+
 
   const showResults = imageUrl && !isLoading && analysisResult;
 
   return (
     <div>
       <h2 className="text-2xl font-bold text-center text-[#1A1A1A] dark:text-gray-100 mb-2 font-poppins">
-        الخطوة الأولى: رفع صورة المنتج وتحليلها
+        الخطوة الأولى: اختر نقطة البداية
       </h2>
       <p className="text-center text-gray-600 dark:text-gray-400 mb-6">
-        ارفع صورة منتجك ليقوم الذكاء الاصطناعي بتحليلها واستخراج لوحة الألوان الخاصة بها.
+        ابدأ بصورة منتج ودع الذكاء الاصطناعي يصمم لك، أو ارفع تصميمك الجاهز وأضف عليه النص.
       </p>
 
-      {!imageUrl && !isLoading && (
-        <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-[#007BFF] transition-colors duration-300 bg-gray-50 dark:bg-gray-800/50">
-          <UploadIcon className="w-12 h-12 text-gray-400 dark:text-gray-500 mb-4" />
-          <label
-            htmlFor="file-upload"
-            className="relative cursor-pointer text-white font-cairo font-bold bg-gradient-to-r from-[#007BFF] to-[#8A2BE2] hover:from-[#006ae0] hover:to-[#7925c7] rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 py-3 px-6"
-          >
-            <span>رفع صورة المنتج</span>
-            <input
-              id="file-upload"
-              name="file-upload"
-              type="file"
-              className="sr-only"
-              accept="image/jpeg, image/png, image/webp"
-              onChange={handleFileChange}
-              disabled={isLoading}
-            />
-          </label>
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">JPG, PNG, WEBP</p>
+      {!isLoading && !showResults && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+            {/* Option 1: Product Image */}
+            <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800/50 h-full">
+            <h3 className="text-xl font-bold mb-4 text-center">البدء بصورة منتج</h3>
+            <UploadIcon className="w-12 h-12 text-gray-400 dark:text-gray-500 mb-4" />
+            <label
+                htmlFor="file-upload-product"
+                className="relative cursor-pointer text-white font-cairo font-bold bg-gradient-to-r from-[#007BFF] to-[#8A2BE2] hover:from-[#006ae0] hover:to-[#7925c7] rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 py-3 px-6"
+            >
+                <span>رفع صورة المنتج</span>
+                <input
+                id="file-upload-product"
+                name="file-upload-product"
+                type="file"
+                className="sr-only"
+                accept="image/jpeg, image/png, image/webp"
+                onChange={handleFileChange}
+                disabled={isLoading}
+                />
+            </label>
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 text-center">سيقوم الذكاء الاصطناعي بتحليل المنتج واقتراح خلفيات إعلانية.</p>
+            </div>
+
+            {/* Option 2: Pre-designed Ad */}
+            <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800/50 h-full">
+            <h3 className="text-xl font-bold mb-4 text-center">البدء بتصميم جاهز</h3>
+            <UploadIcon className="w-12 h-12 text-gray-400 dark:text-gray-500 mb-4" />
+            <label
+                htmlFor="file-upload-designed"
+                className="relative cursor-pointer text-white font-cairo font-bold bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 py-3 px-6"
+            >
+                <span>رفع تصميم إعلان</span>
+                <input
+                id="file-upload-designed"
+                name="file-upload-designed"
+                type="file"
+                className="sr-only"
+                accept="image/jpeg, image/png, image/webp"
+                onChange={handlePreDesignedFileChange}
+                disabled={isLoading}
+                />
+            </label>
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 text-center">ارفع خلفية إعلانك المصممة مسبقًا لإضافة النصوص عليها.</p>
+            </div>
         </div>
       )}
 
       {isLoading && (
         <div className="flex flex-col items-center justify-center p-8 min-h-[200px]">
           <Spinner />
-          <p className="mt-4 text-[#007BFF] animate-pulse">جاري تحليل الصورة...</p>
+          <p className="mt-4 text-[#007BFF] animate-pulse">جاري المعالجة...</p>
         </div>
       )}
 
