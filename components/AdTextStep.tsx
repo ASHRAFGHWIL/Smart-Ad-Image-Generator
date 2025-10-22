@@ -14,7 +14,9 @@ const fontStyles = [
   { key: 'Modern', label: 'حديث', className: 'font-montserrat' },
   { key: 'Elegant', label: 'أنيق', className: 'font-playfair' },
   { key: 'Bold', label: 'عريض', className: 'font-oswald' },
+  { key: 'Impactful', label: 'بارز', className: 'font-bebas-neue' },
   { key: 'Playful', label: 'مرح', className: 'font-pacifico' },
+  { key: 'Cursive', label: 'مخطوطة', className: 'font-lobster' },
 ];
 
 const countWords = (str: string) => {

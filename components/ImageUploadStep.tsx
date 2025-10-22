@@ -36,8 +36,8 @@ const ImageUploadStep: React.FC<ImageUploadStepProps> = ({ onAnalysisComplete })
     }
     setImageUrl(null);
 
-    if (!['image/jpeg', 'image/png'].includes(file.type)) {
-      setError('يرجى رفع ملف بصيغة JPG أو PNG فقط.');
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setError('يرجى رفع ملف بصيغة JPG, PNG أو WEBP فقط.');
       setIsLoading(false);
       return;
     }
@@ -90,12 +90,12 @@ const ImageUploadStep: React.FC<ImageUploadStepProps> = ({ onAnalysisComplete })
               name="file-upload"
               type="file"
               className="sr-only"
-              accept="image/jpeg, image/png"
+              accept="image/jpeg, image/png, image/webp"
               onChange={handleFileChange}
               disabled={isLoading}
             />
           </label>
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">JPG, PNG</p>
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">JPG, PNG, WEBP</p>
         </div>
       )}
 

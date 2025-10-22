@@ -29,7 +29,9 @@ const fontStyles = [
   { key: 'Modern', label: 'حديث' },
   { key: 'Elegant', label: 'أنيق' },
   { key: 'Bold', label: 'عريض' },
+  { key: 'Impactful', label: 'بارز' },
   { key: 'Playful', label: 'مرح' },
+  { key: 'Cursive', label: 'مخطوطة' },
 ];
 
 const FinalImageStep: React.FC<FinalImageStepProps> = ({
@@ -57,6 +59,7 @@ const FinalImageStep: React.FC<FinalImageStepProps> = ({
                     const imageUrl = await generateFinalAdImage(
                         uploadedImage,
                         scene.description,
+                        adSize,
                         adText,
                         customPrompt
                     );
@@ -70,7 +73,7 @@ const FinalImageStep: React.FC<FinalImageStepProps> = ({
             };
             generateImage();
         }
-    }, [isGenerating, uploadedImage, scene, adText, customPrompt, finalImageUrl, isLoading, error]);
+    }, [isGenerating, uploadedImage, scene, adSize, adText, customPrompt, finalImageUrl, isLoading, error]);
 
     const handleDownload = () => {
         if (!finalImageUrl) return;

@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
-import type { AnalysisResult, UploadedImage, AdText } from "../types";
+import type { AnalysisResult, UploadedImage, AdText, AdSize } from "../types";
 
 // Always use new GoogleGenAI({apiKey: process.env.API_KEY});
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -170,18 +170,19 @@ export const generateAdText = async (
 export const generateFinalAdImage = async (
     productImage: UploadedImage,
     sceneDescription: string,
+    adSize: AdSize,
     adText: AdText,
     customPrompt: string
 ): Promise<string> => {
     const model = 'gemini-2.5-flash-image';
     const prompt = `
-    Task: Create a final advertisement image by compositing a product into a scene and adding text.
+    Task: Create a final advertisement image with dimensions ${adSize} pixels.
     1. First, generate a background scene described as: "${sceneDescription}".
     2. Then, seamlessly place the provided product image into that scene. It's critical to match the product's original lighting and shadows to make it look completely natural in its new environment.
     3. Finally, add the following advertising text onto the image. Headline: "${adText.headline}". Body: "${adText.body}". The text should be placed in a visually appealing location, using a stylish and readable font with a "${adText.fontStyle}" style.
     ${customPrompt ? `4. Apply this final user instruction: "${customPrompt}"` : ''}
     
-    The final output must be a single, complete advertisement image that combines all these elements.
+    The final output must be a single, complete advertisement image that combines all these elements, adhering strictly to the ${adSize} dimensions.
     `;
 
     const response = await ai.models.generateContent({
