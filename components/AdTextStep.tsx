@@ -24,6 +24,11 @@ const fontStyles = [
   { key: 'Gothic', label: 'قوطي', className: 'font-uncial' },
   { key: 'Brush', label: 'فرشاة', className: 'font-dancing-script' },
   { key: 'Stencil', label: 'ستنسل', className: 'font-staatliches' },
+  { key: 'Akira', label: 'أكيرا', className: 'font-archivo-black' },
+  { key: 'DanburyCaps', label: 'دانبري كبير', className: 'font-anton' },
+  { key: 'DanburySmall', label: 'دانبري صغير', className: 'font-eb-garamond' },
+  { key: 'Knockout', label: 'نوكاوت', className: 'font-teko' },
+  { key: 'Kopimax', label: 'كوبيماكس', className: 'font-orbitron' },
 ];
 
 const countWords = (str: string) => {

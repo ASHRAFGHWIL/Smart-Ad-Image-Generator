@@ -38,6 +38,11 @@ const fontStylesForTemplates = [
   { key: 'Gothic', label: 'قوطي' },
   { key: 'Brush', label: 'فرشاة' },
   { key: 'Stencil', label: 'ستنسل' },
+  { key: 'Akira', label: 'أكيرا' },
+  { key: 'DanburyCaps', label: 'دانبري كبير' },
+  { key: 'DanburySmall', label: 'دانبري صغير' },
+  { key: 'Knockout', label: 'نوكاوت' },
+  { key: 'Kopimax', label: 'كوبيماكس' },
 ];
 
 
